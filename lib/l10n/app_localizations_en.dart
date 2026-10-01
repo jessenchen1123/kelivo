@@ -45,6 +45,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPageBackButton => 'Back';
 
   @override
+  String get assistantEditVoiceTitle => 'Voice';
+
+  @override
+  String get assistantEditVoiceDescription =>
+      'Voice used when reading this character\'s replies aloud. Leave empty to follow the global TTS settings.';
+
+  @override
+  String get assistantEditVoiceUseGlobal => 'Follow global settings';
+
+  @override
+  String get assistantEditVoiceService => 'Reading service';
+
+  @override
+  String get assistantEditVoiceOverrideLabel => 'Voice name';
+
+  @override
+  String get assistantEditVoiceOverrideHint => 'e.g. Alloy / zh-CN-YunxiNeural';
+
+  @override
   String get characterLibraryPageTitle => 'Characters';
 
   @override

@@ -13,6 +13,7 @@ import '../../shared/widgets/markdown_line_lexer.dart';
 import '../database/business_preferences.dart';
 import '../services/tts/network_tts.dart';
 import '../services/mobile_background.dart';
+import '../models/assistant.dart';
 import '../services/tts/tts_playback_models.dart';
 import '../services/tts/tts_text_chunker.dart';
 
@@ -1255,34 +1256,113 @@ class TtsProvider extends ChangeNotifier {
   Future<TtsServiceOptions?> _getSelectedNetworkService() async {
     try {
       await preferences.load();
-      final jsonStr = preferences.getString('tts_services_v1') ?? '';
-      if (jsonStr.isEmpty) return null;
-      final list = jsonDecode(jsonStr) as List;
+      final services = await _loadNetworkServices();
       final selectedId = preferences.getString('tts_selected_service_id_v1');
       if (selectedId != null && selectedId.isNotEmpty) {
-        for (final obj in list) {
-          final map = obj is Map<String, dynamic>
-              ? obj
-              : Map<String, dynamic>.from(obj as Map);
-          if ((map['id'] ?? '').toString() == selectedId) {
-            return TtsServiceOptions.fromJson(map);
-          }
+        for (final service in services) {
+          if (service.id == selectedId) return service;
         }
         return null;
       }
 
       // Compatibility for profiles not yet loaded by SettingsProvider.
       final legacyIndex = preferences.getInt('tts_selected_v1') ?? -1;
-      if (legacyIndex < 0 || legacyIndex >= list.length) return null;
-      final obj = list[legacyIndex];
-      return TtsServiceOptions.fromJson(
-        obj is Map<String, dynamic>
-            ? obj
-            : Map<String, dynamic>.from(obj as Map),
-      );
+      if (legacyIndex < 0 || legacyIndex >= services.length) return null;
+      return services[legacyIndex];
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<TtsServiceOptions>> _loadNetworkServices() async {
+    final jsonStr = preferences.getString('tts_services_v1') ?? '';
+    if (jsonStr.isEmpty) return const <TtsServiceOptions>[];
+    try {
+      final list = jsonDecode(jsonStr) as List;
+      return [
+        for (final obj in list)
+          TtsServiceOptions.fromJson(
+            obj is Map<String, dynamic>
+                ? obj
+                : Map<String, dynamic>.from(obj as Map),
+          ),
+      ];
+    } catch (_) {
+      return const <TtsServiceOptions>[];
+    }
+  }
+
+  /// Resolve the TTS service for [assistant]: its bound service wins, then
+  /// the global selection; the assistant's voice override patches whichever
+  /// voice field the service kind carries (voice / voiceName / voiceId).
+  Future<TtsServiceOptions?> _resolveServiceForAssistant(
+    Assistant? assistant,
+  ) async {
+    if (assistant == null) return _getSelectedNetworkService();
+    final voiceOverride = assistant.ttsVoiceOverride?.trim() ?? '';
+    final serviceId = assistant.ttsServiceId?.trim() ?? '';
+    TtsServiceOptions? base;
+    if (serviceId.isNotEmpty) {
+      await preferences.load();
+      for (final service in await _loadNetworkServices()) {
+        if (service.id == serviceId) {
+          base = service;
+          break;
+        }
+      }
+    }
+    base ??= await _getSelectedNetworkService();
+    if (base == null || voiceOverride.isEmpty) return base;
+    return applyVoiceOverride(base, voiceOverride);
+  }
+
+  /// Rebuild [service] with every voice-like field replaced by [voice].
+  /// Returns [service] unchanged when the kind carries no voice field.
+  @visibleForTesting
+  static TtsServiceOptions applyVoiceOverride(
+    TtsServiceOptions service,
+    String voice,
+  ) {
+    try {
+      final json = service.toJson();
+      const voiceKeys = ['voice', 'voiceName', 'voiceId'];
+      var patched = false;
+      for (final key in voiceKeys) {
+        if (json.containsKey(key)) {
+          json[key] = voice;
+          patched = true;
+        }
+      }
+      if (!patched) return service;
+      return TtsServiceOptions.fromJson(json);
+    } catch (_) {
+      return service;
+    }
+  }
+
+  /// Speak [text] with [assistant]'s own voice binding (P4). Falls back to
+  /// the global selection when the assistant has none.
+  Future<void> speakForAssistant(
+    Assistant? assistant,
+    String text, {
+    bool flush = true,
+    bool waitForCompletion = true,
+  }) async {
+    if (!_initialized) return;
+    final service = await _resolveServiceForAssistant(assistant);
+    if (service != null && service.enabled) {
+      return _speakQueued(
+        text,
+        networkService: service,
+        flush: flush,
+        waitForCompletion: waitForCompletion,
+      );
+    }
+    return _speakQueued(
+      text,
+      flush: flush,
+      waitForCompletion: waitForCompletion,
+    );
   }
 
   @override

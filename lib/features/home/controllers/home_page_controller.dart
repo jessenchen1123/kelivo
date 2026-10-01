@@ -1890,7 +1890,18 @@ class HomePageController extends ChangeNotifier {
     if (text.trim().isEmpty) return;
     // Automatic narration acknowledges preparation, so ChatActions can release
     // generation resources while the independent speech session keeps running.
-    await tts.speak(text, waitForCompletion: !autoPlay);
+    final chatService = _context.read<ChatService>();
+    final conversation = chatService.getConversation(message.conversationId);
+    final assistant = conversation?.assistantId == null
+        ? null
+        : _context
+              .read<AssistantProvider>()
+              .getById(conversation!.assistantId!);
+    await tts.speakForAssistant(
+      assistant,
+      text,
+      waitForCompletion: !autoPlay,
+    );
   }
 
   void shareMessage(int messageIndex, List<ChatMessage> messageList) {

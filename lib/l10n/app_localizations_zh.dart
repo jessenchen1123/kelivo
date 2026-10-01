@@ -38,6 +38,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPageBackButton => '返回';
 
   @override
+  String get assistantEditVoiceTitle => '语音';
+
+  @override
+  String get assistantEditVoiceDescription => '朗读该角色回复时使用的音色；留空则跟随全局 TTS 设置。';
+
+  @override
+  String get assistantEditVoiceUseGlobal => '跟随全局设置';
+
+  @override
+  String get assistantEditVoiceService => '朗读服务';
+
+  @override
+  String get assistantEditVoiceOverrideLabel => '音色名称';
+
+  @override
+  String get assistantEditVoiceOverrideHint => '如 Alloy / zh-CN-YunxiNeural';
+
+  @override
   String get characterLibraryPageTitle => '角色库';
 
   @override
@@ -12309,6 +12327,24 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get settingsPageBackButton => '返回';
 
   @override
+  String get assistantEditVoiceTitle => '语音';
+
+  @override
+  String get assistantEditVoiceDescription => '朗读该角色回复时使用的音色；留空则跟随全局 TTS 设置。';
+
+  @override
+  String get assistantEditVoiceUseGlobal => '跟随全局设置';
+
+  @override
+  String get assistantEditVoiceService => '朗读服务';
+
+  @override
+  String get assistantEditVoiceOverrideLabel => '音色名称';
+
+  @override
+  String get assistantEditVoiceOverrideHint => '如 Alloy / zh-CN-YunxiNeural';
+
+  @override
   String get characterLibraryPageTitle => '角色库';
 
   @override
@@ -24504,6 +24540,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsPageBackButton => '返回';
+
+  @override
+  String get assistantEditVoiceTitle => '語音';
+
+  @override
+  String get assistantEditVoiceDescription => '朗讀該角色回覆時使用的音色；留空則跟隨全域 TTS 設定。';
+
+  @override
+  String get assistantEditVoiceUseGlobal => '跟隨全域設定';
+
+  @override
+  String get assistantEditVoiceService => '朗讀服務';
+
+  @override
+  String get assistantEditVoiceOverrideLabel => '音色名稱';
+
+  @override
+  String get assistantEditVoiceOverrideHint => '如 Alloy / zh-CN-YunxiNeural';
 
   @override
   String get characterLibraryPageTitle => '角色庫';

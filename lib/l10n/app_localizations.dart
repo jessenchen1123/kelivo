@@ -154,6 +154,42 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get settingsPageBackButton;
 
+  /// No description provided for @assistantEditVoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get assistantEditVoiceTitle;
+
+  /// No description provided for @assistantEditVoiceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice used when reading this character\'s replies aloud. Leave empty to follow the global TTS settings.'**
+  String get assistantEditVoiceDescription;
+
+  /// No description provided for @assistantEditVoiceUseGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow global settings'**
+  String get assistantEditVoiceUseGlobal;
+
+  /// No description provided for @assistantEditVoiceService.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading service'**
+  String get assistantEditVoiceService;
+
+  /// No description provided for @assistantEditVoiceOverrideLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice name'**
+  String get assistantEditVoiceOverrideLabel;
+
+  /// No description provided for @assistantEditVoiceOverrideHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Alloy / zh-CN-YunxiNeural'**
+  String get assistantEditVoiceOverrideHint;
+
   /// No description provided for @characterLibraryPageTitle.
   ///
   /// In en, this message translates to:

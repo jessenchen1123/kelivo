@@ -507,6 +507,40 @@ class _BasicSettingsTabState extends State<_BasicSettingsTab> {
                   ),
                 ],
               ],
+              const SizedBox(height: 14),
+              SectionCard(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Lucide.AudioLines, size: 18, color: cs.onSurface),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.assistantEditVoiceTitle,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: AppFontWeights.semibold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.assistantEditVoiceDescription,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _VoiceBindingFields(assistant: a),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -1982,5 +2016,134 @@ extension _AssistantAvatarActions on _BasicSettingsTabState {
       await _inputAvatarUrl(context, a);
       return;
     }
+  }
+}
+
+
+/// Per-character TTS binding: service picker + free-form voice override.
+class _VoiceBindingFields extends StatelessWidget {
+  const _VoiceBindingFields({required this.assistant});
+
+  final Assistant assistant;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final settings = context.watch<SettingsProvider>();
+    final services = settings.ttsServices;
+    final ap = context.read<AssistantProvider>();
+
+    Future<void> update(Future<Assistant> Function(Assistant) change) async {
+      await ap.updateAssistant(await change(assistant));
+    }
+
+    String serviceName(String? id) {
+      if (id == null || id.isEmpty) return l10n.assistantEditVoiceUseGlobal;
+      for (final service in services) {
+        if (service.id == id) return service.name;
+      }
+      return l10n.assistantEditVoiceUseGlobal;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _TactileRow(
+          onTap: () async {
+            Haptics.light();
+            final selected = await showModalBottomSheet<String>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: context.overlaySurface,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (sheetContext) {
+                return SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 8),
+                      ListTile(
+                        title: Text(l10n.assistantEditVoiceUseGlobal),
+                        onTap: () => Navigator.of(sheetContext).pop(''),
+                      ),
+                      for (final service in services)
+                        ListTile(
+                          title: Text(service.name),
+                          trailing: assistant.ttsServiceId == service.id
+                              ? Icon(Lucide.Check, size: 16, color: cs.primary)
+                              : null,
+                          onTap: () => Navigator.of(sheetContext).pop(service.id),
+                        ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                );
+              },
+            );
+            if (selected == null) return;
+            await update(
+              (a) async => a.copyWith(
+                ttsServiceId: selected.isEmpty ? null : selected,
+                clearTtsServiceId: selected.isEmpty,
+              ),
+            );
+          },
+          pressedScale: 0.98,
+          builder: (pressed) {
+            final bg = context.appColors.surfaceFill;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${l10n.assistantEditVoiceService}: ${serviceName(assistant.ttsServiceId)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurface.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Lucide.ArrowRight,
+                    size: 15,
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: TextEditingController(text: assistant.ttsVoiceOverride ?? ''),
+          key: ValueKey('voice_override_${assistant.id}_${assistant.ttsVoiceOverride ?? ''}'),
+          style: TextStyle(fontSize: 14, color: cs.onSurface),
+          decoration: InputDecoration(
+            labelText: l10n.assistantEditVoiceOverrideLabel,
+            hintText: l10n.assistantEditVoiceOverrideHint,
+            isDense: true,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          onSubmitted: (value) async {
+            await update(
+              (a) async => a.copyWith(
+                ttsVoiceOverride: value.trim(),
+                clearTtsVoiceOverride: value.trim().isEmpty,
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 }

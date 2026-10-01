@@ -98,6 +98,11 @@ class Assistant {
   // Regex replacement rules
   final List<AssistantRegex> regexRules;
 
+  /// Per-character TTS (P4): service id (null = global selection) and a
+  /// voice override string interpreted by the target service kind.
+  final String? ttsServiceId;
+  final String? ttsVoiceOverride;
+
   /// Raw SillyTavern Character Card V2 `data` object when this assistant was
   /// imported from a character card; null for regular assistants. Kept
   /// verbatim so the card re-exports losslessly and UI can read tags /
@@ -154,6 +159,8 @@ class Assistant {
     this.presetMessages = const <PresetMessage>[],
     this.regexRules = const <AssistantRegex>[],
     this.characterCardData,
+    this.ttsServiceId,
+    this.ttsVoiceOverride,
   });
 
   Assistant copyWith({
@@ -204,6 +211,10 @@ class Assistant {
     List<AssistantRegex>? regexRules,
     Map<String, dynamic>? characterCardData,
     bool clearCharacterCardData = false,
+    String? ttsServiceId,
+    bool clearTtsServiceId = false,
+    String? ttsVoiceOverride,
+    bool clearTtsVoiceOverride = false,
     bool clearChatModel = false,
     bool clearDefaultWorkspaceId = false,
     bool clearSkillIds = false,
@@ -290,6 +301,12 @@ class Assistant {
       characterCardData: clearCharacterCardData
           ? null
           : (characterCardData ?? this.characterCardData),
+      ttsServiceId: clearTtsServiceId
+          ? null
+          : (ttsServiceId ?? this.ttsServiceId),
+      ttsVoiceOverride: clearTtsVoiceOverride
+          ? null
+          : (ttsVoiceOverride ?? this.ttsVoiceOverride),
     );
   }
 
@@ -340,6 +357,8 @@ class Assistant {
     'presetMessages': PresetMessage.encodeList(presetMessages),
     'regexRules': regexRules.map((e) => e.toJson()).toList(),
     if (characterCardData != null) 'characterCardData': characterCardData,
+    'ttsServiceId': ttsServiceId,
+    'ttsVoiceOverride': ttsVoiceOverride,
   };
 
   static ReasoningRequest? _readReasoning(Object? value) {
@@ -492,6 +511,13 @@ class Assistant {
     })(),
     characterCardData: json['characterCardData'] is Map
         ? Map<String, dynamic>.from(json['characterCardData'] as Map)
+        : null,
+    ttsServiceId: (json['ttsServiceId'] as String?)?.trim().isNotEmpty == true
+        ? (json['ttsServiceId'] as String).trim()
+        : null,
+    ttsVoiceOverride:
+        (json['ttsVoiceOverride'] as String?)?.trim().isNotEmpty == true
+        ? (json['ttsVoiceOverride'] as String).trim()
         : null,
   );
 
