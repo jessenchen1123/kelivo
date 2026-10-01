@@ -220,11 +220,17 @@ class MemoryPipelineService {
   }
 
   /// Whether conversation summary generation is allowed (§12.10 / D-27).
+  ///
+  /// Summaries also feed the truncation notice (前情提要) injected when the
+  /// context-message limit cuts history, so an assistant that limits context
+  /// gets summaries even without the recall toggles.
   static bool shouldGenerateConversationSummary({
     required bool allowPastConversationRecall,
     required bool generateConversationSummary,
+    bool limitContextMessages = false,
   }) {
-    return allowPastConversationRecall && generateConversationSummary;
+    return (allowPastConversationRecall && generateConversationSummary) ||
+        limitContextMessages;
   }
 
   /// Schedule after an assistant finalize. Never awaits; never throws to chat.

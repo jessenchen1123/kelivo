@@ -6845,6 +6845,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contextLogSourceMemorySnapshot => '记忆快照';
 
   @override
+  String get contextLogSourceTruncationSummary => '前情提要';
+
+  @override
   String get contextLogSourceChatHistory => '聊天历史';
 
   @override
@@ -7247,6 +7250,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get memoryEntryTypeIdentity => '身份';
+
+  @override
+  String get memoryEntryTypePlotEvent => '剧情事件';
+
+  @override
+  String get memoryEntryTypeRelationship => '人物关系';
+
+  @override
+  String get memoryEntryTypeCharacterFact => '角色设定';
+
+  @override
+  String get memoryEntryTypeForeshadow => '约定伏笔';
 
   @override
   String get memoryEntryTypeWorkflow => '工作流';
@@ -18976,6 +18991,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get contextLogSourceMemorySnapshot => '记忆快照';
 
   @override
+  String get contextLogSourceTruncationSummary => '前情提要';
+
+  @override
   String get contextLogSourceChatHistory => '聊天历史';
 
   @override
@@ -19378,6 +19396,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get memoryEntryTypeIdentity => '身份';
+
+  @override
+  String get memoryEntryTypePlotEvent => '剧情事件';
+
+  @override
+  String get memoryEntryTypeRelationship => '人物关系';
+
+  @override
+  String get memoryEntryTypeCharacterFact => '角色设定';
+
+  @override
+  String get memoryEntryTypeForeshadow => '约定伏笔';
 
   @override
   String get memoryEntryTypeWorkflow => '工作流';
@@ -31182,6 +31212,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get contextLogSourceMemorySnapshot => '記憶快照';
 
   @override
+  String get contextLogSourceTruncationSummary => '前情提要';
+
+  @override
   String get contextLogSourceChatHistory => '聊天歷史';
 
   @override
@@ -31584,6 +31617,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get memoryEntryTypeIdentity => '身分';
+
+  @override
+  String get memoryEntryTypePlotEvent => '劇情事件';
+
+  @override
+  String get memoryEntryTypeRelationship => '人物關係';
+
+  @override
+  String get memoryEntryTypeCharacterFact => '角色設定';
+
+  @override
+  String get memoryEntryTypeForeshadow => '約定伏筆';
 
   @override
   String get memoryEntryTypeWorkflow => '工作流';

@@ -659,10 +659,17 @@ final class BusinessSettingsRouter {
           throw FormatException(kind.sourceKey);
         }
         final type = payload['type'] as String;
-        if (type != 'identity' &&
-            type != 'workflow' &&
-            type != 'voice' &&
-            type != 'instruction') {
+        const allowedMemoryTypes = {
+          'plot_event',
+          'relationship',
+          'character_fact',
+          'foreshadow',
+          'identity',
+          'workflow',
+          'voice',
+          'instruction',
+        };
+        if (!allowedMemoryTypes.contains(type)) {
           throw FormatException(kind.sourceKey);
         }
         final status = payload['status'];

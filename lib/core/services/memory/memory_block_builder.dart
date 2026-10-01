@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import '../../models/memory_entry.dart';
 import '../../models/user_profile_field.dart';
 import 'memory_prompts.dart';
+import 'memory_retrieval.dart';
 
 /// Pure serialization for memory / profile injection blocks (§7.2–§7.5, §13.5).
 ///
@@ -12,7 +13,20 @@ import 'memory_prompts.dart';
 abstract final class MemoryBlockBuilder {
   MemoryBlockBuilder._();
 
+  /// Injection order: the roleplay categories lead, legacy entries trail.
   static const List<MemoryType> _typeOrder = [
+    MemoryType.plotEvent,
+    MemoryType.relationship,
+    MemoryType.characterFact,
+    MemoryType.foreshadow,
+    MemoryType.identity,
+    MemoryType.workflow,
+    MemoryType.voice,
+    MemoryType.instruction,
+  ];
+
+  /// Prefixes frozen by pre-RP builds carry exactly these four blocks.
+  static const List<MemoryType> _legacyTypeOrder = [
     MemoryType.identity,
     MemoryType.workflow,
     MemoryType.voice,
@@ -24,6 +38,7 @@ abstract final class MemoryBlockBuilder {
     required Map<MemoryType, int> totalByType,
     required MemoryPromptLang lang,
     required int maxItems,
+    String? queryText,
   }) {
     final out = StringBuffer();
     for (final type in _typeOrder) {
@@ -39,15 +54,11 @@ abstract final class MemoryBlockBuilder {
       if (!summary) {
         selected = List<MemoryEntry>.from(list);
       } else {
-        selected = List<MemoryEntry>.from(list)
-          ..sort((a, b) {
-            final byUpdated = b.updatedAt.compareTo(a.updatedAt);
-            if (byUpdated != 0) return byUpdated;
-            return a.id.compareTo(b.id);
-          });
-        if (selected.length > maxItems) {
-          selected = selected.sublist(0, maxItems);
-        }
+        selected = MemoryRetrieval.selectEntries(
+          entries: list,
+          maxItems: maxItems,
+          queryText: queryText,
+        );
       }
 
       selected.sort((a, b) {
@@ -181,13 +192,25 @@ abstract final class MemoryBlockBuilder {
     if (profile == null) return null;
     cursor = profile;
 
-    for (final type in _typeOrder) {
-      final next = _consumeMemoryBlock(payload, cursor, type);
-      if (next == null) return null;
-      cursor = next;
+    // Prefixes frozen by this build carry every category in [_typeOrder];
+    // pre-RP prefixes stop after the four legacy blocks. Accept either.
+    for (final order in const [_typeOrder, _legacyTypeOrder]) {
+      var probe = cursor;
+      var complete = true;
+      for (final type in order) {
+        final next = _consumeMemoryBlock(payload, probe, type);
+        if (next == null) {
+          complete = false;
+          break;
+        }
+        probe = next;
+      }
+      if (complete) {
+        if (payload.startsWith('\n', probe)) probe++;
+        return probe;
+      }
     }
-    if (payload.startsWith('\n', cursor)) cursor++;
-    return cursor;
+    return null;
   }
 
   static String? _leadingIntro(String payload, {required bool update}) {

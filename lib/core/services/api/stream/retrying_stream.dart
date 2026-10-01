@@ -13,6 +13,11 @@ import '../retry_policy.dart';
 /// at that same moment (used for in-bubble "retrying in N s" UI).
 /// [attemptStartEvent] if non-null is yielded after the wait, before the
 /// next attempt (used to clear that countdown).
+///
+/// [forcedRetries] extends the loop beyond [AutoRetryOptions.maxRetries] even
+/// when auto-retry is disabled. It exists for retries that change the request
+/// rather than repeating it (context-window shrinking); whether to use them is
+/// still decided by [shouldRetry] per error.
 Stream<T> retryingStream<T>({
   required Stream<T> Function(int attempt) attempt,
   required AutoRetryOptions options,
@@ -22,8 +27,9 @@ Stream<T> retryingStream<T>({
   T Function(int attempt, Duration delay, Object error)? retryEvent,
   T Function()? attemptStartEvent,
   Future<void>? cancelled,
+  int forcedRetries = 0,
 }) async* {
-  final maxRetries = options.enabled ? options.maxRetries : 0;
+  final maxRetries = (options.enabled ? options.maxRetries : 0) + forcedRetries;
   Object? lastError;
 
   for (var i = 0; i <= maxRetries; i++) {

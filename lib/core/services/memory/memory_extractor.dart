@@ -50,7 +50,7 @@ abstract final class MemoryExtractor {
     caseSensitive: false,
   );
   static final RegExp _typeAttrRe = RegExp(
-    r'''type\s*=\s*["'](identity|workflow|voice|instruction)["']''',
+    r'''type\s*=\s*["'](plot_event|relationship|character_fact|foreshadow|identity|workflow|voice|instruction)["']''',
     caseSensitive: false,
   );
   static final RegExp _scopeAttrRe = RegExp(

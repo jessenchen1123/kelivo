@@ -2,7 +2,21 @@ import 'dart:math';
 
 enum MemoryScope { global, assistant }
 
-enum MemoryType { identity, workflow, voice, instruction }
+/// RP-first memory categories.
+///
+/// The roleplay categories (plotEvent / relationship / characterFact /
+/// foreshadow) are the primary classification; the four legacy efficiency-era
+/// categories stay parseable so previously stored entries keep loading.
+enum MemoryType {
+  plotEvent,
+  relationship,
+  characterFact,
+  foreshadow,
+  identity,
+  workflow,
+  voice,
+  instruction,
+}
 
 enum MemoryStatus { active, archived }
 
@@ -137,6 +151,14 @@ class MemoryEntry {
 
   static String typeToString(MemoryType type) {
     switch (type) {
+      case MemoryType.plotEvent:
+        return 'plot_event';
+      case MemoryType.relationship:
+        return 'relationship';
+      case MemoryType.characterFact:
+        return 'character_fact';
+      case MemoryType.foreshadow:
+        return 'foreshadow';
       case MemoryType.identity:
         return 'identity';
       case MemoryType.workflow:
@@ -150,6 +172,14 @@ class MemoryEntry {
 
   static MemoryType typeFromString(String value) {
     switch (value) {
+      case 'plot_event':
+        return MemoryType.plotEvent;
+      case 'relationship':
+        return MemoryType.relationship;
+      case 'character_fact':
+        return MemoryType.characterFact;
+      case 'foreshadow':
+        return MemoryType.foreshadow;
       case 'identity':
         return MemoryType.identity;
       case 'workflow':

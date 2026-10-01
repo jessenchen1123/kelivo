@@ -1,4 +1,5 @@
 import '../../../utils/utf16_safe_cut.dart';
+import '../../../core/utils/token_estimator.dart';
 import '../../chat/utils/thinking_tag_parser.dart';
 import 'package:Kelivo/core/providers/external_mounts_provider.dart';
 import 'dart:convert';
@@ -1408,6 +1409,7 @@ class MessageBuilderService {
                   assistant: assistant,
                   lang: settings.resolvedMemoryPromptLang,
                   settings: settings,
+                  queryContext: recentConversationText(apiMessages),
                 )
           : null;
       wanted = current == null || current.isEmpty ? '' : current.prefix;
@@ -1587,6 +1589,38 @@ class MessageBuilderService {
     }
   }
 
+  /// Recent conversation tail used as the memory-retrieval query.
+  ///
+  /// Memory snapshot prefixes are stripped so injected blocks never feed back
+  /// into the ranking, and the tail is capped — enough to describe what the
+  /// conversation is currently about, not enough to match everything.
+  static String recentConversationText(
+    List<Map<String, dynamic>> apiMessages, {
+    int maxMessages = 8,
+    int maxChars = 4000,
+  }) {
+    final lines = <String>[];
+    for (final message in apiMessages.reversed) {
+      if (lines.length >= maxMessages) break;
+      final role = (message['role'] ?? '').toString();
+      if (role != 'user' && role != 'assistant') continue;
+      var text = (message['content'] ?? '').toString().trim();
+      if (text.isEmpty) continue;
+      final split = MemoryBlockBuilder.splitInjectedPrefix(text);
+      if (split != null) {
+        text = split.rest.trim();
+        if (text.isEmpty) continue;
+      }
+      if (text.length > 500) text = text.substring(text.length - 500);
+      lines.add(text);
+    }
+    if (lines.isEmpty) return '';
+    final joined = lines.reversed.join('\n');
+    return joined.length > maxChars
+        ? joined.substring(joined.length - maxChars)
+        : joined;
+  }
+
   /// Exact, read-only memory input for preparation and its revision check.
   /// Tool instructions and time-dependent templates are omitted because
   /// detached preparation cannot use memory-management tools.
@@ -1642,10 +1676,14 @@ class MessageBuilderService {
   /// distinct from the hash, which is a perfectly good hash of two empty
   /// blocks. Always a full snapshot: a superseded one is stripped from history
   /// rather than left in place for an update block to correct.
+  ///
+  /// [queryContext] is the recent conversation tail used to rank memory
+  /// selection; null keeps pure recency.
   Future<MemorySnapshotState?> currentMemorySnapshot({
     required Assistant assistant,
     required MemoryPromptLang lang,
     SettingsProvider? settings,
+    String? queryContext,
   }) async {
     final repo = _repo;
     if (repo == null) return null;
@@ -1665,6 +1703,7 @@ class MessageBuilderService {
       assistantId: assistant.id,
       lang: lang,
       maxItems: maxItems,
+      queryContext: queryContext,
     );
   }
 
@@ -1691,6 +1730,7 @@ class MessageBuilderService {
       assistant: assistant,
       lang: lang,
       settings: settings,
+      queryContext: recentConversationText(apiMessages),
     );
     if (current == null) return _noMemoryPrefix;
     pass?.recordCurrentSnapshot(current);
@@ -2413,10 +2453,16 @@ class MessageBuilderService {
   }
 
   /// Apply context message limit based on assistant settings.
+  ///
+  /// When messages are cut, a truncation notice (前情提要) is injected ahead of
+  /// the surviving tail: the stored conversation summary plus an explicit
+  /// omission marker, so the model knows its context is partial instead of
+  /// silently believing the conversation began at the cut point.
   void applyContextLimit(
     List<Map<String, dynamic>> apiMessages,
-    Assistant? assistant,
-  ) {
+    Assistant? assistant, {
+    Conversation? conversation,
+  }) {
     if ((assistant?.limitContextMessages ?? false) &&
         (assistant?.contextMessageSize ?? 0) > 0) {
       final int keep = (assistant!.contextMessageSize).clamp(
@@ -2429,10 +2475,16 @@ class MessageBuilderService {
       }
       final tail = apiMessages.sublist(startIdx);
       if (tail.length > keep) {
-        final trimmed = tail.sublist(tail.length - keep);
+        final omitted = tail.length - keep;
         apiMessages
           ..removeRange(startIdx, apiMessages.length)
-          ..addAll(trimmed);
+          ..addAll(tail.sublist(tail.length - keep));
+        insertTruncationNotice(
+          apiMessages,
+          startIdx: startIdx,
+          omittedCount: omitted,
+          summary: conversation?.summary,
+        );
       }
       // Context trimming can cut in the middle of a tool-call triplet; avoid sending dangling tool messages.
       while (apiMessages.length > startIdx &&
@@ -2440,6 +2492,133 @@ class MessageBuilderService {
         apiMessages.removeAt(startIdx);
       }
     }
+  }
+
+  /// Insert the truncation notice (前情提要) as a synthetic user message.
+  ///
+  /// role=user with a `<system>` wrapper mirrors the world-book injection
+  /// convention: a mid-conversation `system` role is rejected by some
+  /// providers, and messages without a revision id are never mistaken for
+  /// persisted user input.
+  void insertTruncationNotice(
+    List<Map<String, dynamic>> apiMessages, {
+    required int startIdx,
+    required int omittedCount,
+    String? summary,
+  }) {
+    final text = buildTruncationNotice(
+      omittedCount: omittedCount,
+      summary: summary,
+    );
+    final message = <String, dynamic>{'role': 'user', 'content': text};
+    ContextSegmentTags.replaceWithSingle(
+      message,
+      source: ContextSource.truncationSummary,
+      length: text.length,
+    );
+    apiMessages.insert(startIdx.clamp(0, apiMessages.length), message);
+  }
+
+  /// The 前情提要 block injected when history is omitted. Pure.
+  static String buildTruncationNotice({
+    required int omittedCount,
+    String? summary,
+  }) {
+    final trimmed = summary?.trim() ?? '';
+    final buf = StringBuffer('<previous_story>');
+    buf.writeln(
+      '[System] 更早的 $omittedCount 条消息已因上下文长度被省略（$omittedCount earlier messages omitted）。以下是对更早剧情的提示，不是本轮发言：',
+    );
+    if (trimmed.isNotEmpty) {
+      buf.writeln('前情提要 / Story so far:');
+      buf.write(trimmed);
+    } else {
+      buf.write('（暂无前情提要 / No summary is available for the omitted part yet。）');
+    }
+    buf.write('\n</previous_story>');
+    return buf.toString();
+  }
+
+  /// Estimated token count of [apiMessages] (text content only).
+  ///
+  /// Attachments are not counted; callers should keep the trigger threshold
+  /// far enough below the window that uncounted media/tool budgets still fit.
+  static int estimateApiMessagesTokens(
+    List<Map<String, dynamic>> apiMessages,
+  ) {
+    var total = 0;
+    for (final message in apiMessages) {
+      final content = message['content'];
+      if (content is String && content.isNotEmpty) {
+        total += estimateTokens(content);
+      }
+      final reasoning = message['reasoning_content'];
+      if (reasoning is String && reasoning.isNotEmpty) {
+        total += estimateTokens(reasoning);
+      }
+    }
+    return total;
+  }
+
+  /// Shrink an over-long context before sending (接近窗口自动收缩).
+  ///
+  /// Runs when the assistant does not limit context (or its limit is still too
+  /// large for the model window) and the estimated request would overflow.
+  /// Keeps the system prompt plus the most recent messages that fit in
+  /// [targetFraction] of the window, and injects the same truncation notice as
+  /// [applyContextLimit]. Returns true when anything was cut.
+  ///
+  /// When [contextWindowTokens] is unknown (null / <= 0) this is a no-op: the
+  /// request goes out unshrunk and the provider's overflow error is handled by
+  /// the send-time retry instead.
+  bool applyOverflowShrink(
+    List<Map<String, dynamic>> apiMessages, {
+    Conversation? conversation,
+    int? contextWindowTokens,
+    double triggerFraction = 0.92,
+    double targetFraction = 0.55,
+  }) {
+    final window = contextWindowTokens ?? 0;
+    if (window <= 0) return false;
+
+    final startIdx =
+        (apiMessages.isNotEmpty && apiMessages.first['role'] == 'system')
+        ? 1
+        : 0;
+    var estimate = estimateApiMessagesTokens(apiMessages);
+    if (estimate <= (window * triggerFraction).floor()) return false;
+
+    final target = (window * targetFraction).floor();
+    var kept = 0;
+    var keptTokens = 0;
+    for (final message in apiMessages.reversed) {
+      final content = message['content'];
+      final tokens = content is String && content.isNotEmpty
+          ? estimateTokens(content)
+          : 0;
+      // Always keep the newest message even if it alone exceeds the target.
+      if (kept > 0 && keptTokens + tokens > target) break;
+      kept++;
+      keptTokens += tokens;
+    }
+    final omitted = apiMessages.length - startIdx - kept;
+    if (omitted <= 0) return false;
+
+    final cutAt = apiMessages.length - kept;
+    apiMessages.removeRange(startIdx, cutAt);
+    var danglingTools = 0;
+    while (apiMessages.length > startIdx &&
+        (apiMessages[startIdx]['role'] ?? '').toString() == 'tool') {
+      apiMessages.removeAt(startIdx);
+      danglingTools++;
+    }
+    insertTruncationNotice(
+      apiMessages,
+      startIdx: startIdx,
+      omittedCount: omitted + danglingTools,
+      summary: conversation?.summary,
+    );
+    return true;
   }
 
   /// Convert local Markdown image links to inline base64 for model context.

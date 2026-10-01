@@ -25,6 +25,14 @@ final DateFormat memoryEntryDateFormat = DateFormat('yyyy-MM-dd');
 
 String memoryTypeLabel(AppLocalizations l10n, MemoryType type) {
   switch (type) {
+    case MemoryType.plotEvent:
+      return l10n.memoryEntryTypePlotEvent;
+    case MemoryType.relationship:
+      return l10n.memoryEntryTypeRelationship;
+    case MemoryType.characterFact:
+      return l10n.memoryEntryTypeCharacterFact;
+    case MemoryType.foreshadow:
+      return l10n.memoryEntryTypeForeshadow;
     case MemoryType.identity:
       return l10n.memoryEntryTypeIdentity;
     case MemoryType.workflow:
@@ -51,6 +59,14 @@ String memorySourceLabel(AppLocalizations l10n, MemorySource source) {
 
 Color memoryTypeColor(ColorScheme cs, MemoryType type) {
   switch (type) {
+    case MemoryType.plotEvent:
+      return cs.primary;
+    case MemoryType.relationship:
+      return cs.secondary;
+    case MemoryType.characterFact:
+      return cs.tertiary;
+    case MemoryType.foreshadow:
+      return cs.error;
     case MemoryType.identity:
       return cs.primary;
     case MemoryType.workflow:

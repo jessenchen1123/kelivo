@@ -110,6 +110,10 @@ void main() {
 ''');
 
       expect(memory, '''
+<user_memory type="plot_event"/>
+<user_memory type="relationship"/>
+<user_memory type="character_fact"/>
+<user_memory type="foreshadow"/>
 <user_memory type="identity">
 - [2026-08-07] 用户是大学生，长期参与软件开发项目。
 </user_memory>
@@ -201,6 +205,10 @@ void main() {
         maxItems: 10,
       );
       expect(out, '''
+<user_memory type="plot_event"/>
+<user_memory type="relationship"/>
+<user_memory type="character_fact"/>
+<user_memory type="foreshadow"/>
 <user_memory type="identity"/>
 <user_memory type="workflow"/>
 <user_memory type="voice"/>
@@ -236,19 +244,23 @@ void main() {
         lang: MemoryPromptLang.zh,
         maxItems: maxItems,
       );
+      // The identity block sits behind the four empty RP blocks.
+      final identityBlock = summary.substring(
+        summary.indexOf('<user_memory type="identity"'),
+      );
       expect(
-        summary.startsWith(
+        identityBlock.startsWith(
           '<user_memory type="identity" mode="summary" total="${maxItems + 1}" shown="$maxItems">\n',
         ),
         isTrue,
       );
-      expect('\n- ['.allMatches(summary).length, maxItems);
-      expect(summary.contains(MemoryPrompts.moreHintZh), isTrue);
+      expect('\n- ['.allMatches(identityBlock).length, maxItems);
+      expect(identityBlock.contains(MemoryPrompts.moreHintZh), isTrue);
       // Newest among 0..10 is index 10; take 10 newest = 1..10, then
       // re-sort by createdAt ASC → still 1..10 chronologically.
-      expect(summary.contains('entry 1'), isTrue);
-      expect(summary.contains('entry 10'), isTrue);
-      expect(summary.contains('entry 0'), isFalse);
+      expect(identityBlock.contains('entry 1'), isTrue);
+      expect(identityBlock.contains('entry 10'), isTrue);
+      expect(identityBlock.contains('entry 0'), isFalse);
     });
 
     test('maxItems=1 folds extra items to a single shown entry', () {
@@ -455,6 +467,107 @@ void main() {
         ),
         '${MemoryPrompts.introFullZh}\n$profile$memory\n',
       );
+    });
+
+    test('RP entries render first; category order is plot→relationship→fact→foreshadow', () {
+      final entries = [
+        _entry(
+          id: 'mem_foresh1',
+          type: MemoryType.foreshadow,
+          content: '两人约定三天后在钟楼见面。',
+          createdAt: DateTime(2026, 8, 1),
+          updatedAt: DateTime(2026, 8, 1),
+        ),
+        _entry(
+          id: 'mem_plot01',
+          type: MemoryType.plotEvent,
+          content: '用户在酒馆战斗后救下了受伤的旅人。',
+          createdAt: DateTime(2026, 8, 2),
+          updatedAt: DateTime(2026, 8, 2),
+        ),
+        _entry(
+          id: 'mem_fact01',
+          type: MemoryType.characterFact,
+          content: '用户的角色左耳有一个耳洞。',
+          createdAt: DateTime(2026, 8, 3),
+          updatedAt: DateTime(2026, 8, 3),
+        ),
+        _entry(
+          id: 'mem_relat1',
+          type: MemoryType.relationship,
+          content: '旅人开始信任用户，改口称呼其为恩人。',
+          createdAt: DateTime(2026, 8, 4),
+          updatedAt: DateTime(2026, 8, 4),
+        ),
+      ];
+      final out = MemoryBlockBuilder.buildMemoryBlock(
+        visible: entries,
+        totalByType: {
+          for (final t in MemoryType.values)
+            t: entries.where((e) => e.type == t).length,
+        },
+        lang: MemoryPromptLang.zh,
+        maxItems: 10,
+      );
+      final plotAt = out.indexOf('type="plot_event"');
+      final relationshipAt = out.indexOf('type="relationship"');
+      final factAt = out.indexOf('type="character_fact"');
+      final foreshadowAt = out.indexOf('type="foreshadow"');
+      final identityAt = out.indexOf('type="identity"');
+      expect(plotAt, greaterThanOrEqualTo(0));
+      expect(plotAt < relationshipAt, isTrue);
+      expect(relationshipAt < factAt, isTrue);
+      expect(factAt < foreshadowAt, isTrue);
+      expect(foreshadowAt < identityAt, isTrue);
+      expect(out, contains('左耳有一个耳洞'));
+    });
+
+    test('queryText resurfaces the old relevant entry (P0-b via block)', () {
+      MemoryEntry make(int i, String content) => _entry(
+        id: 'mem_${i.toString().padLeft(8, '0')}',
+        type: MemoryType.characterFact,
+        content: content,
+        createdAt: DateTime(2026, 1, 1).add(Duration(days: i)),
+        updatedAt: DateTime(2026, 1, 1).add(Duration(days: i)),
+      );
+      final oldRelevant = make(0, '用户的角色左耳有一个耳洞。');
+      final entries = [
+        oldRelevant,
+        ...List.generate(
+          15,
+          (i) => make(i + 1, '无关设定 $i：喜欢的食物、天气与颜色。'),
+        ),
+      ];
+      final out = MemoryBlockBuilder.buildMemoryBlock(
+        visible: entries,
+        totalByType: {MemoryType.characterFact: entries.length},
+        lang: MemoryPromptLang.zh,
+        maxItems: 10,
+        queryText: '用户：你还记得我耳朵上的耳洞吗？',
+      );
+      expect(out, contains('耳洞'));
+      expect(out, contains('mode="summary"'));
+    });
+
+    test('prefixes frozen by this build (8 blocks) stay strippable', () {
+      final prefix = MemoryBlockBuilder.buildFullSnapshotPrefix(
+        MemoryBlockBuilder.buildProfileBlock(
+          fields: const [],
+          lang: MemoryPromptLang.zh,
+        ),
+        MemoryBlockBuilder.buildMemoryBlock(
+          visible: const [],
+          totalByType: const {},
+          lang: MemoryPromptLang.zh,
+          maxItems: 10,
+        ),
+        MemoryPromptLang.zh,
+      );
+      expect(MemoryBlockBuilder.endOfInjectedPrefix(prefix), isNotNull);
+      final split = MemoryBlockBuilder.splitInjectedPrefix('$prefix正文');
+      expect(split, isNotNull);
+      expect(split!.kind, 'full');
+      expect(split.rest, '正文');
     });
   });
 

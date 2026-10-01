@@ -16,18 +16,28 @@ abstract final class MemoryPrompts {
 对话中可能出现由系统提供的记忆信息，它们不是用户本轮说的话：
 
 - <user_profile> 是用户的稳定身份信息，例如希望你怎么称呼他、语言偏好、时区。
-- <user_memory type="..."> 是分四类的长期记忆。每行形如 `- [2026-08-07] 内容`，方括号里是这条记忆最后更新的日期。带 `(assistant) ` 前缀的条目只属于当前助手，其余对所有助手可见。
-- 标了 mode="summary" 的块表示该类型共有 total 属性标明的条数，只列出了 shown 属性指明的最近若干条；需要更多时用 memory_search_profile 查询。
-- 形如 <user_memory type="voice"/> 的空标签表示该类型目前没有记忆。
+- <user_memory type="..."> 是分四类的长期记忆：plot_event（剧情事件）、relationship（人物关系）、character_fact（角色设定事实）、foreshadow（约定伏笔）。每行形如 `- [2026-08-07] 内容`，方括号里是这条记忆最后更新的日期。带 `(assistant) ` 前缀的条目只属于当前角色，其余对所有角色可见。旧版本可能留下 identity / workflow / voice / instruction 类型的条目，把它们当作角色设定事实看待即可。
+- 标了 mode="summary" 的块表示该类型共有 total 属性标明的条数，只列出了 shown 属性指明的条目；需要更早的剧情时用 memory_search_profile 查询。
+- 形如 <user_memory type="plot_event"/> 的空标签表示该类型目前没有记忆。
 - 对话进行中出现的 <user_memory_update> 是记忆的最新完整快照，用它替换你之前看到的记忆内容。
 
 称呼用户时，如果 <user_profile> 里有 preferred_name 就按它称呼；没有就不要猜测，也不要使用记忆中出现过的其他人的名字。
 
-当用户透露了跨对话仍然成立的稳定信息时，用 memory_update 写一条记忆。判断标准是：下次重新开一个对话，不知道这件事会不会让你的回答变差。
+四类记忆的含义：
+- plot_event（剧情事件）：已经发生过的重要情节——谁做了什么、在哪里、说过什么关键的话、发生了什么转折。共同经历、场所转换、获得的物品、冲突与和解都算。
+- relationship（人物关系）：用户与角色之间、角色与其他人物之间的关系及其变化——称呼、亲疏、信任、敌友。
+- character_fact（角色设定事实）：用户或角色的稳定设定——外貌、性格、喜好、能力、背景、身体特征（如耳洞、伤疤）、习惯、口头禅。
+- foreshadow（约定伏笔）：尚未兑现的约定、承诺、计划和埋下的悬念——之后剧情要回收的东西。兑现后应更新或删除。
 
-不要写入：本次对话内的临时上下文、你自己推断而用户没有确认的结论、用户只是随口提到的话题、可以直接从对话记录里查到的事实。
+当对话透露了下面这类信息时，用 memory_update 写一条记忆。判断标准是：下次重新开一个对话，如果不知道这件事，剧情就会接不上、人物就会前后矛盾。角色扮演对话中要主动记录：
+- 剧情推进的关键节点，包括角色自己说过的话、做过的动作和承诺。
+- 用户透露的关于其角色（或本人）的设定与事实，哪怕只是顺带提到——只要对后续剧情有意义就要记。
+- 关系变化：称呼变化、情感进展、信任或敌意的转变。
+- 双方做出的约定、计划和埋下的伏笔；兑现后更新对应条目。
 
-写入时用完整的第三人称陈述句描述用户，不要使用「这个」「刚才」等指回本次对话的词。系统会自动去重合并，不需要先读取再全文替换。
+不要写入：与剧情和人物无关的现实事务细节（如技术问答、一次性操作指令）、你自己推断而对方没有确认的结论、同一件事的重复记录。
+
+写入时用完整、自包含的第三人称陈述句，写清楚谁、发生了什么；剧情事件要带上先后顺序（如「在××之后」）。不要使用「这个」「刚才」等指回本次对话的词。系统会自动去重合并，不需要先读取再全文替换。
 
 用户明确指出某条记忆不对时，用 memory_edit 修改，或用 memory_delete 归档。
 '''
@@ -40,18 +50,28 @@ abstract final class MemoryPrompts {
 The conversation may contain memory information provided by the system. It is not what the user said in the current turn:
 
 - <user_profile> holds stable facts about the user, such as how they want to be addressed, language preference and timezone.
-- <user_memory type="..."> holds long-term memory in four categories. Each line looks like `- [2026-08-07] content`, where the bracket is the date this entry was last updated. Entries prefixed with `(assistant) ` belong only to the current assistant; the rest are visible to all assistants.
-- A block marked mode="summary" means the category has the number of entries given by the total attribute, and only the most recent ones indicated by the shown attribute are listed. Use memory_search_profile when you need more.
-- An empty tag such as <user_memory type="voice"/> means the category currently has no entries.
+- <user_memory type="..."> holds long-term memory in four categories: plot_event (story events), relationship (character relationships), character_fact (character-setting facts) and foreshadow (promises and setups). Each line looks like `- [2026-08-07] content`, where the bracket is the date this entry was last updated. Entries prefixed with `(assistant) ` belong only to the current character; the rest are visible to all characters. Entries left by older versions may use the identity / workflow / voice / instruction categories; treat them as character facts.
+- A block marked mode="summary" means the category has the number of entries given by the total attribute, and only the ones indicated by the shown attribute are listed. Use memory_search_profile when you need earlier story.
+- An empty tag such as <user_memory type="plot_event"/> means the category currently has no entries.
 - A <user_memory_update> appearing mid-conversation is the latest complete snapshot. Replace the memory you saw earlier with it.
 
 When addressing the user, use preferred_name from <user_profile> if present. Otherwise do not guess, and never use the name of another person that appears in memory.
 
-When the user reveals something that will still be true in a different conversation, write one entry with memory_update. The test is: if you started a fresh conversation, would not knowing this make your answer worse?
+What the four categories mean:
+- plot_event: significant story events that already happened — who did what, where, the key things said, the turns the story took. Shared experiences, scene changes, items gained, conflicts and reconciliations all belong here.
+- relationship: relationships between the user and the character, or between characters, and how they change — forms of address, closeness, trust, friend or foe.
+- character_fact: stable facts about the user or the character — appearance, personality, likes, abilities, background, physical traits (such as an ear piercing or a scar), habits, catchphrases.
+- foreshadow: promises, plans and setups not yet fulfilled — things the story must pay off later. Update or delete an entry once it is fulfilled.
 
-Do not write: temporary context from this conversation, conclusions you inferred but the user did not confirm, topics the user merely mentioned in passing, or facts that can be looked up directly in the chat history.
+When the conversation reveals this kind of information, write one entry with memory_update. The test is: if you started a fresh conversation without knowing this, would the story stop making sense or the characters become inconsistent? In roleplay conversations, actively record:
+- Key plot beats, including what the character said, did and promised.
+- Facts and settings the user revealed about their character (or themselves), even in passing — as long as they matter to the story ahead.
+- Relationship changes: shifts in forms of address, emotional progress, trust or hostility.
+- Agreements, plans and setups the two sides made; update the entry once it is fulfilled.
 
-Write complete third-person statements about the user. Do not use words like "this" or "just now" that point back to the current conversation. The system deduplicates and merges automatically, so you do not need to read first and rewrite the whole entry.
+Do not write: real-world details unrelated to story and characters (technical Q&A, one-off operational instructions), conclusions you inferred but the other side did not confirm, or duplicate records of the same thing.
+
+Write complete, self-contained third-person statements that say who did what; give plot events their order (e.g. "after ..."). Do not use words like "this" or "just now" that point back to the current conversation. The system deduplicates and merges automatically, so you do not need to read first and rewrite the whole entry.
 
 When the user says an entry is wrong, use memory_edit to fix it or memory_delete to archive it.
 '''
@@ -124,10 +144,12 @@ You may hint during casual chat that you are able to remember things.
 
   static final String gateZh =
       '''
-分析以下对话，判断其中是否包含值得长期记忆的用户信息。
+分析以下对话，判断其中是否包含值得长期记住、跨对话仍然有意义的信息。
 
-值得记忆：用户透露了个人信息、做事偏好、表达风格特征、对助手的明确要求
-不值得：纯技术问答、项目细节、一次性操作指令
+值得记忆：剧情推进（发生了什么事、谁说了关键的话）、设定揭示（人物的外貌、性格、背景、身体特征、喜好）、关系变化（称呼、亲疏、信任、敌友）、约定或伏笔（承诺、计划、悬念）、对角色的明确要求
+不值得：与现实事务有关的纯技术问答、一次性操作指令、纯粹的寒暄且没有透露任何新信息
+
+角色扮演与陪伴对话中，剧情和设定随时可能出现，判断宜宽不宜严：拿不准时选 true。
 
 输出格式（严格按此 XML，不要输出多余文字）：
 <gate>
@@ -141,10 +163,12 @@ You may hint during casual chat that you are able to remember things.
 
   static final String gateEn =
       '''
-Analyse the conversation below and decide whether it contains user information worth remembering long term.
+Analyse the conversation below and decide whether it contains information worth remembering long term that still matters across conversations.
 
-Worth remembering: the user revealed personal information, a way of working, a characteristic of how they express themselves, or an explicit requirement for the assistant.
-Not worth remembering: pure technical Q&A, project details, one-off operational instructions.
+Worth remembering: plot progression (what happened, key things said), setting reveals (appearance, personality, background, physical traits, likes), relationship changes (forms of address, closeness, trust, friend or foe), promises or setups (commitments, plans, open threads), explicit requests for the character.
+Not worth remembering: purely technical Q&A about real-world tasks, one-off operational instructions, small talk that revealed nothing new.
+
+In roleplay and companion conversations, plot and setting details can appear at any moment. When in doubt, lean towards true.
 
 Output format (follow this XML exactly, no extra text):
 <gate>
@@ -160,20 +184,22 @@ Output format (follow this XML exactly, no extra text):
 
   static final String extractZh =
       '''
-从对话中提取用户画像的新信息。每条信息独立、简洁、完整。
+从对话中提取值得长期记忆的新信息。每条信息独立、简洁、完整。
 
-四类画像：
-- identity（身份）：姓名、性别、代词偏好、职业、公司、身边的人、能力背景
-- workflow（工作方式）：做事流程、工具偏好、调试习惯
-- voice（表达风格）：行文风格、句式节奏、用词习惯
-- instruction（用户指令）：用户对助手的明确要求——回复风格、禁止项、交互偏好
+四类剧情记忆：
+- plot_event（剧情事件）：已经发生的重要情节——谁做了什么、在哪里、角色说过的关键的话和承诺、转折、获得的物品、冲突与和解
+- relationship（人物关系）：用户与角色之间、角色与其他人物之间的关系及其变化——称呼、亲疏、信任、敌友
+- character_fact（角色设定事实）：用户或角色的稳定设定——外貌、性格、喜好、能力、背景、身体特征、习惯、口头禅
+- foreshadow（约定伏笔）：尚未兑现的约定、承诺、计划和埋下的悬念
+
+另有身份类：identity（用户本人的姓名、代词偏好、职业等稳定画像信息，用于自动维护 <user_profile>）
 
 规则：
-- 只从用户说的话里提取
-- 不提取助手的角色设定
-- 不提取可以直接从对话记录或代码里查到的事实
-- 每条一句话，独立自包含，用第三人称描述用户
-- 不使用「这个」「刚才」等指回本次对话的词
+- 剧情发生在对话双方身上：用户说的话和角色说的话、做的事都要看
+- 只提取对话中明确出现的内容，不推断对方没有确认的结论
+- 用户顺带提到、但对后续剧情有意义的设定事实（如身体特征）也要提取
+- 每条一句话，独立自包含，写清楚谁、发生了什么
+- 剧情事件保持先后顺序（如「在××之后」）；不使用「这个」「刚才」等指回本次对话的词
 - 「已有记忆」里已经出现过的信息不要重复提取
 
 ## 已有记忆
@@ -181,7 +207,7 @@ Output format (follow this XML exactly, no extra text):
 
 输出格式：
 <extracted>
-<item type="identity|workflow|voice|instruction">一句话描述</item>
+<item type="plot_event|relationship|character_fact|foreshadow|identity">一句话描述</item>
 </extracted>
 
 如果没有值得提取的信息：
@@ -194,20 +220,22 @@ Output format (follow this XML exactly, no extra text):
 
   static final String extractEn =
       '''
-Extract new information about the user from the conversation. Each item must be independent, concise and complete.
+Extract new information from the conversation worth remembering long term. Each item must be independent, concise and complete.
 
-Four categories:
-- identity: name, gender, pronoun preference, occupation, company, people around them, background
-- workflow: how they work, tool preferences, debugging habits
-- voice: writing style, sentence rhythm, word choice
-- instruction: explicit requirements the user has for the assistant — reply style, prohibitions, interaction preferences
+Four story categories:
+- plot_event: significant events that already happened — who did what, where, key things the character said and promised, turns, items gained, conflicts and reconciliations
+- relationship: relationships between the user and the character, or between characters, and how they change — forms of address, closeness, trust, friend or foe
+- character_fact: stable facts about the user or the character — appearance, personality, likes, abilities, background, physical traits, habits, catchphrases
+- foreshadow: promises, plans and setups not yet fulfilled
+
+Plus one profile category: identity (stable facts about the user themselves — name, pronoun preference, occupation — used to maintain <user_profile> automatically)
 
 Rules:
-- Extract only from what the user said
-- Do not extract the assistant's persona
-- Do not extract facts that can be looked up directly in the chat history or in code
-- One sentence per item, self-contained, third person about the user
-- Do not use words like "this" or "just now" that point back to the current conversation
+- The story lives on both sides: watch what the user said AND what the character said and did
+- Extract only what the conversation explicitly contains; do not infer conclusions nobody confirmed
+- Also extract setting facts the user mentioned in passing when they matter to the story ahead (such as physical traits)
+- One sentence per item, self-contained, saying who did what
+- Keep plot events ordered (e.g. "after ..."); do not use words like "this" or "just now" that point back to the current conversation
 - Do not re-extract anything already present in "Existing memory"
 
 ## Existing memory
@@ -215,7 +243,7 @@ Rules:
 
 Output format:
 <extracted>
-<item type="identity|workflow|voice|instruction">one sentence</item>
+<item type="plot_event|relationship|character_fact|foreshadow|identity">one sentence</item>
 </extracted>
 
 If there is nothing worth extracting:

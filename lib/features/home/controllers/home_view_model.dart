@@ -1660,6 +1660,7 @@ class HomeViewModel extends ChangeNotifier {
           assistant?.allowPastConversationRecall == true,
       generateConversationSummary:
           assistant?.generateConversationSummary == true,
+      limitContextMessages: assistant?.limitContextMessages == true,
     )) {
       return;
     }

@@ -6,11 +6,15 @@ import 'memory_prompts.dart';
 typedef MemorySnapshotState = ({String prefix, String hash, bool isEmpty});
 
 /// The same effective profile and memory blocks for requests and usage caches.
+///
+/// [queryContext] is recent conversation text used to rank which memories get
+/// injected when a category exceeds [maxItems]; null keeps pure recency.
 Future<MemorySnapshotState> readMemorySnapshot({
   required ChatDatabaseRepository repository,
   required String assistantId,
   required MemoryPromptLang lang,
   required int maxItems,
+  String? queryContext,
 }) async {
   final data = await repository.readMemorySnapshotData(
     assistantId: assistantId,
@@ -30,6 +34,7 @@ Future<MemorySnapshotState> readMemorySnapshot({
     totalByType: totals,
     lang: lang,
     maxItems: maxItems,
+    queryText: queryContext,
   );
   return (
     prefix: MemoryBlockBuilder.buildFullSnapshotPrefix(

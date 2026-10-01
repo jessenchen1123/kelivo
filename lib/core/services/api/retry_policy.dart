@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 
 import '../../models/auto_retry_options.dart';
+import '../../models/compress_context_options.dart';
 
 /// Process-wide auto-retry config, synced from [SettingsProvider].
 ///
@@ -13,6 +14,40 @@ import '../../models/auto_retry_options.dart';
 /// helper. Tests assign it directly.
 class AutoRetryConfig {
   static AutoRetryOptions current = const AutoRetryOptions.defaults();
+}
+
+/// True when the provider rejected the request because it exceeded the model's
+/// context window.
+///
+/// Delegates to the compress pipeline's detector so the send-time retry and
+/// the split-summarize retry agree on what counts as an overflow.
+bool isContextOverflowError(Object error) => isContextLengthError(error);
+
+/// Drop the older half of [messages] (any leading system message survives) and
+/// insert an omission marker, mutating the list in place.
+///
+/// Used by the send-time overflow retry, where the only lever available is the
+/// message list itself. Returns true when anything was dropped; false when the
+/// request is too small to shrink meaningfully (retrying would change nothing).
+bool shrinkApiMessagesForOverflow(List<Map<String, dynamic>> messages) {
+  final startIdx =
+      (messages.isNotEmpty && messages.first['role'] == 'system') ? 1 : 0;
+  final bodyCount = messages.length - startIdx;
+  if (bodyCount < 2) return false;
+  final keep = bodyCount - bodyCount ~/ 2;
+  messages.removeRange(startIdx, startIdx + (bodyCount - keep));
+  while (messages.length > startIdx &&
+      (messages[startIdx]['role'] ?? '').toString() == 'tool') {
+    messages.removeAt(startIdx);
+  }
+  final marker =
+      '[System] 更早的对话已因超出模型上下文窗口被省略（earlier messages '
+      'omitted to fit the context window）。';
+  messages.insert(
+    startIdx.clamp(0, messages.length),
+    {'role': 'user', 'content': marker},
+  );
+  return true;
 }
 
 final RegExp _httpStatusPattern = RegExp(

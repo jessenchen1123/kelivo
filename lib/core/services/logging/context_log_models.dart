@@ -16,6 +16,7 @@ enum ContextSource {
   skills,
   worldBook,
   memorySnapshot,
+  truncationSummary,
   chatHistory,
   toolCall,
   toolResult,

@@ -81,6 +81,7 @@ class ContextAssemblyPreview {
       memoryText: content([
         ContextSource.memoryRules,
         ContextSource.memorySnapshot,
+        ContextSource.truncationSummary,
       ]),
       worldBookText: content([ContextSource.worldBook]),
       skillsText: content([ContextSource.skills]),

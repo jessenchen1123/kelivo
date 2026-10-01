@@ -12997,6 +12997,12 @@ abstract class AppLocalizations {
   /// **'Memory snapshot'**
   String get contextLogSourceMemorySnapshot;
 
+  /// No description provided for @contextLogSourceTruncationSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Story so far'**
+  String get contextLogSourceTruncationSummary;
+
   /// No description provided for @contextLogSourceChatHistory.
   ///
   /// In en, this message translates to:
@@ -13758,6 +13764,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Identity'**
   String get memoryEntryTypeIdentity;
+
+  /// No description provided for @memoryEntryTypePlotEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Plot event'**
+  String get memoryEntryTypePlotEvent;
+
+  /// No description provided for @memoryEntryTypeRelationship.
+  ///
+  /// In en, this message translates to:
+  /// **'Relationship'**
+  String get memoryEntryTypeRelationship;
+
+  /// No description provided for @memoryEntryTypeCharacterFact.
+  ///
+  /// In en, this message translates to:
+  /// **'Character fact'**
+  String get memoryEntryTypeCharacterFact;
+
+  /// No description provided for @memoryEntryTypeForeshadow.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreshadow'**
+  String get memoryEntryTypeForeshadow;
 
   /// No description provided for @memoryEntryTypeWorkflow.
   ///

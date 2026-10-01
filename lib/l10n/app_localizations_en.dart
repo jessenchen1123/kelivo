@@ -7128,6 +7128,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contextLogSourceMemorySnapshot => 'Memory snapshot';
 
   @override
+  String get contextLogSourceTruncationSummary => 'Story so far';
+
+  @override
   String get contextLogSourceChatHistory => 'Chat history';
 
   @override
@@ -7548,6 +7551,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get memoryEntryTypeIdentity => 'Identity';
+
+  @override
+  String get memoryEntryTypePlotEvent => 'Plot event';
+
+  @override
+  String get memoryEntryTypeRelationship => 'Relationship';
+
+  @override
+  String get memoryEntryTypeCharacterFact => 'Character fact';
+
+  @override
+  String get memoryEntryTypeForeshadow => 'Foreshadow';
 
   @override
   String get memoryEntryTypeWorkflow => 'Workflow';

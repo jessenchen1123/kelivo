@@ -460,7 +460,8 @@ abstract final class MemoryTools {
     if (args.containsKey('type') && args['type'] != null && type == null) {
       return toolError(
         error: 'invalid_memory_type',
-        message: 'type must be one of: identity, workflow, voice, instruction.',
+        message:
+            'type must be one of: plot_event, relationship, character_fact, foreshadow, identity, workflow, voice, instruction.',
         tool: memoryRead,
       );
     }
@@ -514,7 +515,7 @@ abstract final class MemoryTools {
       return toolError(
         error: 'invalid_memory_type',
         message:
-            'type is required and must be one of: identity, workflow, voice, instruction.',
+            'type is required and must be one of: plot_event, relationship, character_fact, foreshadow, identity, workflow, voice, instruction.',
         tool: memoryUpdate,
       );
     }
@@ -571,7 +572,8 @@ abstract final class MemoryTools {
     if (args.containsKey('type') && args['type'] != null && type == null) {
       return toolError(
         error: 'invalid_memory_type',
-        message: 'type must be one of: identity, workflow, voice, instruction.',
+        message:
+            'type must be one of: plot_event, relationship, character_fact, foreshadow, identity, workflow, voice, instruction.',
         tool: memorySearchProfile,
       );
     }
@@ -902,14 +904,23 @@ abstract final class MemoryTools {
       'function': {
         'name': memoryRead,
         'description': zh
-            ? '读取用户的长期记忆。type 可选：identity（姓名、身边的人、职业等身份信息）、workflow（做事方式、工具偏好、调试习惯）、voice（行文风格、句式节奏、用词习惯）、instruction（用户对你的明确要求）。不传 type 则返回全部类型。使用 limit 和 offset 分页；结果中 total 为筛选后的总条数，has_more 为 true 时，保持筛选条件不变，将 next_offset 作为下次调用的 offset 继续读取，最后一页 next_offset 为 null。对话中已经提供了记忆摘要，只有在摘要标了 mode="summary" 被截断、或需要拿到条目 id 时才需要调用。'
+            ? '读取用户的长期记忆。type 可选：plot_event（已发生的剧情：谁做了什么、关键台词与转折）、relationship（用户与角色之间、角色与其他人物的关系及其变化）、character_fact（用户或角色的稳定设定：外貌、性格、喜好、身体特征等）、foreshadow（尚未兑现的约定、承诺与伏笔）、identity（用户本人的姓名、职业等身份信息）。不传 type 则返回全部类型。使用 limit 和 offset 分页；结果中 total 为筛选后的总条数，has_more 为 true 时，保持筛选条件不变，将 next_offset 作为下次调用的 offset 继续读取，最后一页 next_offset 为 null。对话中已经提供了记忆摘要，只有在摘要标了 mode="summary" 被截断、或需要拿到条目 id 时才需要调用。'
             : 'Read the user\'s long-term memory. Optional type: identity (name, people around them, occupation, etc.), workflow (ways of working, tool preferences, debugging habits), voice (writing style, rhythm, word choice), instruction (explicit requests to you). Omit type to return all types. Paginate with limit and offset. The result total counts all entries matching the filters. When has_more is true, keep the same filters and pass next_offset as offset to read the next page; next_offset is null on the last page. A memory summary is already in the conversation; call this only when a block is marked mode="summary" (truncated) or you need entry ids.',
         'parameters': {
           'type': 'object',
           'properties': {
             'type': {
               'type': 'string',
-              'enum': ['identity', 'workflow', 'voice', 'instruction'],
+              'enum': [
+                'plot_event',
+                'relationship',
+                'character_fact',
+                'foreshadow',
+                'identity',
+                'workflow',
+                'voice',
+                'instruction',
+              ],
               'description': zh
                   ? '只返回该类型的记忆。省略则返回全部类型。'
                   : 'Return only memories of this type. Omit to return all types.',
@@ -950,16 +961,25 @@ abstract final class MemoryTools {
     final properties = <String, dynamic>{
       'type': {
         'type': 'string',
-        'enum': ['identity', 'workflow', 'voice', 'instruction'],
+        'enum': [
+          'plot_event',
+          'relationship',
+          'character_fact',
+          'foreshadow',
+          'identity',
+          'workflow',
+          'voice',
+          'instruction',
+        ],
         'description': zh
-            ? 'identity 身份信息；workflow 做事方式与工具偏好；voice 表达风格；instruction 用户对你的明确要求。'
-            : 'identity: identity facts; workflow: ways of working and tool preferences; voice: expression style; instruction: explicit requests to you.',
+            ? 'plot_event 剧情事件；relationship 人物关系；character_fact 角色设定事实；foreshadow 约定伏笔；identity 用户身份信息。'
+            : 'plot_event: story events; relationship: character relationships; character_fact: character-setting facts; foreshadow: promises and setups; identity: user profile facts.',
       },
       'content': {
         'type': 'string',
         'description': zh
-            ? '一条完整、自包含的第三人称陈述句，例如「用户偏好直接、可落地的中文说明」。不要使用「这个」「刚才」等指回本次对话的词。'
-            : 'One complete, self-contained third-person statement, e.g. "The user prefers direct, actionable explanations in Chinese." Avoid deictic words that refer back to this conversation.',
+            ? '一条完整、自包含的第三人称陈述句，例如「用户偏好直接、可落地的中文说明」或「在酒馆冲突后两人决定结伴同行」。不要使用「这个」「刚才」等指回本次对话的词。'
+            : 'One complete, self-contained third-person statement, e.g. "The user prefers direct, actionable explanations in Chinese." or "After the tavern conflict the two decided to travel together." Avoid deictic words that refer back to this conversation.',
       },
     };
     if (writeScope == MemoryWriteScope.toolDefaultGlobal ||
@@ -977,8 +997,8 @@ abstract final class MemoryTools {
       'function': {
         'name': memoryUpdate,
         'description': zh
-            ? '写入一条用户长期记忆。系统会自动与已有记忆去重合并，不需要先读取再全文替换。只写下次新开对话时仍然成立的稳定信息；本次对话内的临时上下文不要写。'
-            : 'Write one long-term user memory. The system deduplicates and merges with existing memories automatically; you do not need to read then replace. Only write stable facts that will still hold in a future conversation; do not write ephemeral context from this chat.',
+            ? '写入一条长期记忆。系统会自动与已有记忆去重合并，不需要先读取再全文替换。角色扮演中主动记录剧情事件、关系变化、角色设定和约定伏笔——判断标准是下次新开对话时不知道这件事剧情会不会接不上；与现实事务有关的临时上下文不要写。'
+            : 'Write one long-term memory. The system deduplicates and merges with existing memories automatically; you do not need to read then replace. In roleplay, actively record plot events, relationship changes, character facts and setups — the test is whether the story would stop making sense without it in a fresh conversation; do not write ephemeral real-world context from this chat.',
         'parameters': {
           'type': 'object',
           'properties': properties,
@@ -1008,7 +1028,16 @@ abstract final class MemoryTools {
             },
             'type': {
               'type': 'string',
-              'enum': ['identity', 'workflow', 'voice', 'instruction'],
+              'enum': [
+                'plot_event',
+                'relationship',
+                'character_fact',
+                'foreshadow',
+                'identity',
+                'workflow',
+                'voice',
+                'instruction',
+              ],
               'description': zh
                   ? '只在该类型内搜索。省略则搜索全部类型。'
                   : 'Search only within this type. Omit to search all types.',

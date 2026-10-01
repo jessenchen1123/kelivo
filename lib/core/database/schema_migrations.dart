@@ -103,12 +103,16 @@ final class SchemaMigrations {
   /// Forward compatibility only started at schema 2 — schema 1 builds reject
   /// anything but their own version — so this can never usefully be lower.
   ///
+  /// Raised to 4 for the memory-type CHECK widening (schema 4): rows carrying
+  /// the roleplay categories would violate an older build's table constraint
+  /// on import, so older builds must refuse rather than partially restore.
+  ///
   /// Raise this to [AppDatabase.currentSchemaVersion] in any release whose
   /// schema change is NOT purely additive: a renamed or repurposed column, a
   /// new value in an existing column that older builds would misread, or a
   /// tightened constraint. Leaving it low in that case lets an older build
   /// silently import data it misunderstands.
-  static const minimumReadableSchemaVersion = 2;
+  static const minimumReadableSchemaVersion = 4;
 
   /// Classifies a backup from its manifest.
   ///

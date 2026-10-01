@@ -599,7 +599,16 @@ class MemoryEntryRows extends Table {
   TextColumn get assistantId => text().nullable()();
   TextColumn get type => text().check(
     // ignore: recursive_getters
-    type.isIn(const ['identity', 'workflow', 'voice', 'instruction']),
+    type.isIn(const [
+      'plot_event',
+      'relationship',
+      'character_fact',
+      'foreshadow',
+      'identity',
+      'workflow',
+      'voice',
+      'instruction',
+    ]),
   )();
   TextColumn get status => text().check(
     // ignore: recursive_getters
@@ -764,13 +773,15 @@ class AppDatabase extends _$AppDatabase {
   // per-conversation model override; schema 3 lays the extension groundwork
   // (extras_json columns, message updated_at/sender_id, tombstone_rows,
   // extension_entity_rows) so later features can ship without further
-  // migrations. Every version outside [publishedSchemaVersions] belongs to an
+  // migrations; schema 4 widens the memory_entry_rows.type CHECK with the
+  // roleplay categories (plot_event/relationship/character_fact/foreshadow).
+  // Every version outside [publishedSchemaVersions] belongs to an
   // unpublished or future format and is rejected.
-  static const currentSchemaVersion = 3;
+  static const currentSchemaVersion = 4;
 
   /// Every schema that has ever shipped. A file at any of these can be
   /// upgraded by `SchemaMigrations`; anything else is rejected outright.
-  static const publishedSchemaVersions = <int>{1, 2, 3};
+  static const publishedSchemaVersions = <int>{1, 2, 3, 4};
 
   /// Whether a live application connection may use a file as-is: either freshly
   /// created (0) or already at the current schema.
@@ -940,6 +951,12 @@ FROM probe;
         await m.createTable(schema.extensionEntityRows);
         // stepByStep does not create new indexes automatically.
         await m.create(schema.idxExtensionEntitiesKindOrder);
+      },
+      // The memory type CHECK gains the roleplay categories. SQLite cannot
+      // ALTER a CHECK constraint, so the table is recreated from the current
+      // DSL (same columns in the same order; drift re-creates its indexes).
+      from3To4: (m, schema) async {
+        await m.alterTable(TableMigration(schema.memoryEntryRows));
       },
     ),
     beforeOpen: (details) async {

@@ -302,7 +302,19 @@ class MessageGenerationService {
       workspaceContext: workspaceContext,
     );
 
-    messageBuilderService.applyContextLimit(apiMessages, assistant);
+    messageBuilderService.applyContextLimit(
+      apiMessages,
+      assistant,
+      conversation: promptConversation,
+    );
+    // 接近模型窗口时主动收缩，把超窗报错变成带前情提要的成功请求。
+    messageBuilderService.applyOverflowShrink(
+      apiMessages,
+      conversation: promptConversation,
+      contextWindowTokens: ModelSpecResolver.instance
+          .spec(cfg, modelId)
+          .contextWindow,
+    );
 
     final mcpRouteSnapshot = generationController.captureMcpToolRoutes(
       assistant,

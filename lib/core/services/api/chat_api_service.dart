@@ -226,6 +226,10 @@ class ChatApiService {
     // Disallow media, tools and body overrides for detached text generation.
     bool textOnly = false,
     AutoRetryOptions? retryOverride,
+    // On a context-window overflow, drop the older half of the request and
+    // retry once instead of surfacing the error. Utility single-prompt calls
+    // (generateText) turn this off so their own split-retry keeps full input.
+    bool shrinkOnContextOverflow = true,
   }) async* {
     final sessionToken = CancelToken();
     final toolCancellation = ToolCallCancellation(
@@ -300,16 +304,30 @@ class ChatApiService {
       final retryNetworkErrors =
           !useOpenAIImagesApi && !useZhipuLayoutParsing && !imageOutput;
       final emitRetryUi = options.enabled && options.maxRetries > 0;
+      var overflowShrunk = false;
+      bool retryAfterOverflowOrError(Object error) {
+        if (shrinkOnContextOverflow &&
+            !overflowShrunk &&
+            isContextOverflowError(error) &&
+            shrinkApiMessagesForOverflow(safeMessages)) {
+          overflowShrunk = true;
+          return true;
+        }
+        if (!options.enabled) return false;
+        return shouldRetryError(
+          error,
+          options,
+          retryOnNetworkError: retryNetworkErrors ? null : false,
+        );
+      }
+
       Stream<StreamChunk> retryRound(Stream<StreamChunk> Function() sendRound) {
         return retryingStream<StreamChunk>(
           options: options,
+          forcedRetries: shrinkOnContextOverflow ? 1 : 0,
           isCancelled: () => sessionToken.isCancelled,
           cancelled: _whenCancelled(sessionToken),
-          shouldRetry: (error) => shouldRetryError(
-            error,
-            options,
-            retryOnNetworkError: retryNetworkErrors ? null : false,
-          ),
+          shouldRetry: retryAfterOverflowOrError,
           retryEvent: emitRetryUi
               ? (attempt, delay, error) => RetryPending(
                   attempt: attempt + 1,
@@ -606,6 +624,7 @@ class ChatApiService {
     bool parseMarkdownImageLinks = true,
     bool textOnly = false,
     AutoRetryOptions? retryOverride,
+    bool shrinkOnContextOverflow = true,
     void Function(RetryPending? pending)? onRetry,
     void Function(Usage update)? onUsage,
   }) async {
@@ -635,6 +654,7 @@ class ChatApiService {
       parseMarkdownImageLinks: parseMarkdownImageLinks,
       textOnly: textOnly,
       retryOverride: retryOverride,
+      shrinkOnContextOverflow: shrinkOnContextOverflow,
     )) {
       if (chunk is RetryAttemptStart) {
         onRetry?.call(null);
@@ -671,6 +691,9 @@ class ChatApiService {
       builtInSearchOnly: true,
       skipImageParsing: skipImageParsing,
       allowImagesApiRouting: !skipImageParsing,
+      // Their caller (e.g. summarizeWithContextRetry) owns overflow handling:
+      // silently dropping input here would corrupt summaries.
+      shrinkOnContextOverflow: false,
     );
     return result.text;
   }

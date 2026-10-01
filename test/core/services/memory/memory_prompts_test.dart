@@ -137,4 +137,46 @@ void main() {
       );
     });
   });
+
+  group('RP memory rules (P0-a acceptance)', () {
+    test('rules name all four roleplay categories in both languages', () {
+      for (final rules in [MemoryPrompts.rulesZh, MemoryPrompts.rulesEn]) {
+        expect(rules, contains('plot_event'));
+        expect(rules, contains('relationship'));
+        expect(rules, contains('character_fact'));
+        expect(rules, contains('foreshadow'));
+      }
+      expect(MemoryPrompts.rulesZh, contains('剧情事件'));
+      expect(MemoryPrompts.rulesZh, contains('人物关系'));
+      expect(MemoryPrompts.rulesZh, contains('约定伏笔'));
+      expect(MemoryPrompts.rulesEn, contains('story events'));
+    });
+
+    test(
+      'the old exclude-casual-topics clause is replaced by plot-memory rules',
+      () {
+        // Old rule: 用户只是随口提到的话题 → do not write.
+        expect(MemoryPrompts.rulesZh.contains('随口提到的话题'), isFalse);
+        // New rule: passing remarks that matter to the story must be written.
+        expect(MemoryPrompts.rulesZh.contains('哪怕只是顺带提到'), isTrue);
+        expect(MemoryPrompts.rulesZh.contains('剧情就会接不上'), isTrue);
+        expect(MemoryPrompts.rulesEn.contains('even in passing'), isTrue);
+      },
+    );
+
+    test('extract prompts harvest from both sides of the dialogue', () {
+      expect(MemoryPrompts.extractZh, contains('plot_event'));
+      expect(MemoryPrompts.extractZh, contains('foreshadow'));
+      expect(MemoryPrompts.extractZh, contains('用户说的话和角色说的话'));
+      expect(MemoryPrompts.extractZh.contains('只从用户说的话里提取'), isFalse);
+      expect(MemoryPrompts.extractEn, contains('plot_event'));
+      expect(MemoryPrompts.extractEn, contains('what the character said and did'));
+    });
+
+    test('gate leans inclusive for roleplay conversations', () {
+      expect(MemoryPrompts.gateZh, contains('剧情推进'));
+      expect(MemoryPrompts.gateZh, contains('宜宽不宜严'));
+      expect(MemoryPrompts.gateEn, contains('lean towards true'));
+    });
+  });
 }
