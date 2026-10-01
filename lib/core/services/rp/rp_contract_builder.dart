@@ -28,8 +28,9 @@ abstract final class RpContractBuilder {
     buf.writeln();
     buf.writeln('1. 【保持热度】从头到尾保持你已经建立的性格、热情程度、语气和对用户的称呼习惯。剧情没有明确改变关系之前，不许变得冷漠、简短、客气或像客服。觉得"该收着点"的时候，往往正是角色该保持本色的时候。');
     buf.writeln('2. 【写作格式】动作用*星号*包裹，对白直接写；用与用户相同的语言；像写小说一样给出动作和情绪细节，不要只回一两句话。');
-    buf.writeln('3. 【边界】绝不代替用户说话、行动或做决定；每次回复把反应的空间留给用户。');
-    buf.writeln('4. 【连续性】<user_memory>、<previous_story>里记载的剧情、关系与约定必须延续；用户提起过去的事时，先对照记忆再回答。');
+    buf.writeln('3. 【防复读】不要重复最近几轮用过的开场句式、比喻和口头禅；每一轮都要推进剧情或情绪，哪怕一点点。');
+    buf.writeln('4. 【边界】绝不代替用户说话、行动或做决定；每次回复把反应的空间留给用户。');
+    buf.writeln('5. 【连续性】<user_memory>、<previous_story>里记载的剧情、关系与约定必须延续；用户提起过去的事时，先对照记忆再回答。');
     if (phi.isNotEmpty) {
       buf.writeln();
       buf.writeln('【卡片附加指令（优先级高于上述条款）】');
@@ -49,8 +50,9 @@ abstract final class RpContractBuilder {
     buf.writeln();
     buf.writeln('1. [Keep the warmth] Keep the personality, warmth, tone and way of addressing the user that you established at the start. Until the story explicitly changes the relationship, do not turn cold, terse, polite or assistant-like. When you feel like toning it down is usually exactly when the character should stay in character.');
     buf.writeln('2. [Format] Wrap actions in *asterisks*; write dialogue plainly; reply in the user\'s language; give action and emotional detail like a novel instead of one-liners.');
-    buf.writeln('3. [Boundaries] Never speak, act or decide for the user; leave room for their reaction in every reply.');
-    buf.writeln('4. [Continuity] The plot, relationships and promises recorded in <user_memory> and <previous_story> must carry forward; when the user mentions the past, check memory before answering.');
+    buf.writeln('3. [No repetition] Do not reuse the opening phrasings, metaphors and catchphrases of your recent turns; advance the plot or the emotion every turn, even a little.');
+    buf.writeln('4. [Boundaries] Never speak, act or decide for the user; leave room for their reaction in every reply.');
+    buf.writeln('5. [Continuity] The plot, relationships and promises recorded in <user_memory> and <previous_story> must carry forward; when the user mentions the past, check memory before answering.');
     if (phi.isNotEmpty) {
       buf.writeln();
       buf.writeln('[Card-specific instructions (override the rules above)]');
@@ -64,4 +66,28 @@ abstract final class RpContractBuilder {
   /// Whether [assistant] would produce a non-empty contract.
   static bool appliesTo(Assistant? assistant) =>
       assistant != null && assistant.isCharacter;
+
+  /// The card's `mes_example` as an injectable block (ST `<START>` chunks
+  /// preserved). Appended to the system message so it survives every
+  /// truncation path, exactly like SillyTavern's example-dialogue slot.
+  /// Empty when the card has no examples.
+  static String buildExampleDialogue({
+    required Assistant? assistant,
+    required String userName,
+  }) {
+    if (assistant == null || !assistant.isCharacter) return '';
+    final raw = ((assistant.characterCardData?['mes_example'] as String?) ?? '')
+        .trim();
+    if (raw.isEmpty) return '';
+    final name = assistant.name;
+    final filled = raw
+        .replaceAll('{{char}}', name)
+        .replaceAll('{{user}}', userName.isEmpty ? '用户' : userName);
+    final buf = StringBuffer('<example_dialogue>');
+    buf.writeln();
+    buf.writeln('［以下是「$name」的对话风格示例，仅供模仿语气与格式；这些对话没有真的发生过，不要在回复中提及或当作剧情。］');
+    buf.writeln(filled);
+    buf.write('</example_dialogue>');
+    return buf.toString();
+  }
 }

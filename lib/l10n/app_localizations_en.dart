@@ -7181,6 +7181,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contextLogSourceRoleplayContract => 'Roleplay contract';
 
   @override
+  String get contextLogSourceExampleDialogue => 'Example dialogue';
+
+  @override
   String get contextLogSourceChatHistory => 'Chat history';
 
   @override

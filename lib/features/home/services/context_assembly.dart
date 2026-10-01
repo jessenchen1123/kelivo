@@ -71,7 +71,10 @@ class ContextAssemblyPreview {
     bool isMcp(Map<String, dynamic> tool) =>
         mcpToolNames.contains((tool['function'] as Map?)?['name']);
     return ContextAssemblyPreview(
-      systemText: content([ContextSource.systemPrompt]),
+      systemText: content([
+        ContextSource.systemPrompt,
+        ContextSource.exampleDialogue,
+      ]),
       injectionsText: content([
         ContextSource.instructionInjection,
         ContextSource.roleplayContract,

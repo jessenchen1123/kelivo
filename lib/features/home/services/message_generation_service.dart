@@ -13,6 +13,7 @@ import '../../../core/models/skills_binding.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
 import '../../../core/services/api/builtin_tools.dart';
 import '../../../core/services/api/chat_api_service.dart';
@@ -152,6 +153,15 @@ class MessageGenerationService {
     return r.level != ReasoningLevel.off;
   }
 
+  /// Current user nickname for {{user}} placeholder filling; empty on failure.
+  String _currentUserName() {
+    try {
+      return contextProvider.read<UserProvider>().name.trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
   /// Packs system prompt, injections, history, and tool definitions without
   /// OCR, document extraction, or inline-image encoding.
   Future<UnprocessedRequestContext> assembleUnprocessedRequestContext({
@@ -217,6 +227,12 @@ class MessageGenerationService {
       assistant,
       modelId,
       conversation: promptConversation,
+    );
+    // 角色卡的示例对话追加进 system 消息：跟随人设常驻，裁剪永不触及。
+    messageBuilderService.injectExampleDialogue(
+      apiMessages,
+      assistant,
+      userName: _currentUserName(),
     );
     await messageBuilderService.injectMemoryAndRecentChats(
       apiMessages,

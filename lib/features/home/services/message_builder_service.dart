@@ -2424,6 +2424,28 @@ class MessageBuilderService {
     } catch (_) {}
   }
 
+  /// Append the character card's example dialogue to the system message.
+  ///
+  /// Lives inside the system message (not a mid-list injection) so context
+  /// trimming never removes it — matching SillyTavern, where examples sit in
+  /// the system region and keep steering style on long chats.
+  void injectExampleDialogue(
+    List<Map<String, dynamic>> apiMessages,
+    Assistant? assistant, {
+    String userName = '',
+  }) {
+    final block = RpContractBuilder.buildExampleDialogue(
+      assistant: assistant,
+      userName: userName,
+    );
+    if (block.isEmpty) return;
+    _appendToSystemMessage(
+      apiMessages,
+      block,
+      source: ContextSource.exampleDialogue,
+    );
+  }
+
   /// Inject the roleplay contract for imported characters near the END of the
   /// context (bottom-attention position), after truncation/overflow shaping so
   /// the block itself is never cut.

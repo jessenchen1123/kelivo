@@ -18,6 +18,7 @@ enum ContextSource {
   memorySnapshot,
   truncationSummary,
   roleplayContract,
+  exampleDialogue,
   chatHistory,
   toolCall,
   toolResult,

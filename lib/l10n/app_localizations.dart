@@ -13087,6 +13087,12 @@ abstract class AppLocalizations {
   /// **'Roleplay contract'**
   String get contextLogSourceRoleplayContract;
 
+  /// No description provided for @contextLogSourceExampleDialogue.
+  ///
+  /// In en, this message translates to:
+  /// **'Example dialogue'**
+  String get contextLogSourceExampleDialogue;
+
   /// No description provided for @contextLogSourceChatHistory.
   ///
   /// In en, this message translates to:

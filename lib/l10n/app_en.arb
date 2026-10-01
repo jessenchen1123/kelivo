@@ -3051,6 +3051,7 @@
   "contextLogSourceMemorySnapshot": "Memory snapshot",
   "contextLogSourceTruncationSummary": "Story so far",
   "contextLogSourceRoleplayContract": "Roleplay contract",
+  "contextLogSourceExampleDialogue": "Example dialogue",
   "contextLogSourceChatHistory": "Chat history",
   "contextLogSourceToolCall": "Tool call",
   "contextLogSourceToolResult": "Tool result",

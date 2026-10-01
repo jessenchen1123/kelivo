@@ -39,6 +39,8 @@ void main() {
       expect(contract, contains('星尘旅者'));
       expect(contract, contains('保持热度'));
       expect(contract, contains('不许变得冷漠、简短、客气'));
+      expect(contract, contains('防复读'));
+      expect(contract, contains('每一轮都要推进剧情'));
       expect(contract, contains('绝不代替用户说话、行动或做决定'));
       expect(contract, contains('<previous_story>'));
     });
@@ -62,6 +64,37 @@ void main() {
       );
       expect(contract, contains('卡片附加指令'));
       expect(contract, contains('Always end with a question.'));
+    });
+
+    test('example dialogue fills placeholders and frames itself', () {
+      final block = RpContractBuilder.buildExampleDialogue(
+        assistant: character(data: {
+          'name': '星尘旅者',
+          'mes_example': '<START>\n{{user}}: 你好\n{{char}}: *抬头* 星光正好。',
+        }),
+        userName: '阿杰',
+      );
+      expect(block, startsWith('<example_dialogue>'));
+      expect(block, contains('阿杰: 你好'));
+      expect(block, contains('星尘旅者: *抬头* 星光正好。'));
+      expect(block, contains('没有真的发生过'));
+    });
+
+    test('example dialogue empty for non-characters and blank input', () {
+      expect(
+        RpContractBuilder.buildExampleDialogue(
+          assistant: const Assistant(id: 'a', name: '助手'),
+          userName: 'u',
+        ),
+        isEmpty,
+      );
+      expect(
+        RpContractBuilder.buildExampleDialogue(
+          assistant: character(data: {'name': 'x', 'mes_example': '  '}),
+          userName: 'u',
+        ),
+        isEmpty,
+      );
     });
 
     test('blank PHI is omitted entirely', () {

@@ -2536,6 +2536,7 @@
   "contextLogSourceMemorySnapshot": "记忆快照",
   "contextLogSourceTruncationSummary": "前情提要",
   "contextLogSourceRoleplayContract": "扮演契约",
+  "contextLogSourceExampleDialogue": "示例对话",
   "contextLogSourceChatHistory": "聊天历史",
   "contextLogSourceToolCall": "工具调用",
   "contextLogSourceToolResult": "工具结果",
