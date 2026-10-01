@@ -324,6 +324,7 @@ class SettingsProvider extends ChangeNotifier {
       'display_use_layered_sheet_tiles_v1';
   static const String _displayAssistantBubbleFitContentKey =
       'display_assistant_bubble_fit_content_v1';
+  static const String _displayRpNarrationStyleKey = 'rp_narration_style_v1';
   static const String _displayAssistantBubbleSplitParagraphsKey =
       'display_assistant_bubble_split_paragraphs_v1';
   static const String _displayChatMessageBackgroundStyleKey =
@@ -539,6 +540,12 @@ class SettingsProvider extends ChangeNotifier {
   // When on, blank lines split assistant text into one bubble per paragraph.
   bool _assistantBubbleSplitParagraphs = false;
   bool get assistantBubbleSplitParagraphs => _assistantBubbleSplitParagraphs;
+
+  // Roleplay narration style (P3): whole-line *…* in assistant messages
+  // renders as muted italic stage directions outside the bubble. Default on —
+  // this fork targets roleplay first.
+  bool _rpNarrationStyle = true;
+  bool get rpNarrationStyle => _rpNarrationStyle;
 
   // Desktop UI persisted state
   double _desktopSidebarWidth = 240;
@@ -1117,6 +1124,7 @@ class SettingsProvider extends ChangeNotifier {
         prefs.getBool(_displayAssistantBubbleFitContentKey) ?? false;
     _assistantBubbleSplitParagraphs =
         prefs.getBool(_displayAssistantBubbleSplitParagraphsKey) ?? false;
+    _rpNarrationStyle = prefs.getBool(_displayRpNarrationStyleKey) ?? true;
     // display: markdown/math rendering
     _enableDollarLatex = prefs.getBool(_displayEnableDollarLatexKey) ?? true;
     _enableMathRendering =
@@ -2613,6 +2621,13 @@ class SettingsProvider extends ChangeNotifier {
     _assistantBubbleSplitParagraphs = v;
     notifyListeners();
     await _preferences.setBool(_displayAssistantBubbleSplitParagraphsKey, v);
+  }
+
+  Future<void> setRpNarrationStyle(bool v) async {
+    if (_rpNarrationStyle == v) return;
+    _rpNarrationStyle = v;
+    notifyListeners();
+    await _preferences.setBool(_displayRpNarrationStyleKey, v);
   }
 
   Future<void> setUseLayeredSheetTiles(bool v) async {

@@ -52,6 +52,7 @@ import '../../../utils/platform_utils.dart';
 import '../../home/services/ask_user_interaction_service.dart';
 import '../../home/services/local_tools_service.dart';
 import '../../home/services/tool_approval_service.dart';
+import '../utils/assistant_narration_splitter.dart';
 import '../utils/assistant_paragraph_splitter.dart';
 import '../utils/thinking_tag_parser.dart';
 import 'timeline_projection.dart';
@@ -2602,7 +2603,9 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   }
 
   /// One bubble per text block, or one per paragraph when the split option is
-  /// on. [blockKey] disambiguates the selection areas of sibling bubbles.
+  /// on. Whole-line `*…*` narration lines render OUTSIDE any bubble as muted
+  /// italic stage directions (P3); [blockKey] disambiguates the selection
+  /// areas of sibling blocks.
   List<Widget> _buildAssistantTextBubbles(
     BuildContext context,
     String visualContent,
@@ -2613,19 +2616,68 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
     final split = context.select<SettingsProvider, bool>(
       (s) => s.assistantBubbleSplitParagraphs,
     );
-    final parts = split
-        ? splitAssistantParagraphs(visualContent)
-        : <String>[visualContent];
-    return <Widget>[
-      for (var i = 0; i < parts.length; i++)
-        _buildAssistantTextBlock(
-          context,
-          parts[i],
-          enableAssistantMarkdown,
-          citationIndexLookup,
-          contentKey: parts.length == 1 ? '' : '$blockKey.$i',
+    final narrationOn = context.select<SettingsProvider, bool>(
+      (s) => s.rpNarrationStyle,
+    );
+    final segments = narrationOn
+        ? splitAssistantNarration(visualContent)
+        : <NarrationSegment>[
+            NarrationSegment(text: visualContent, narration: false),
+          ];
+    final widgets = <Widget>[];
+    var blockIndex = 0;
+    for (final segment in segments) {
+      if (segment.narration) {
+        widgets.add(
+          _assistantBlockWidth(
+            context,
+            child: _buildNarrationBlock(context, segment.text),
+          ),
+        );
+        blockIndex++;
+        continue;
+      }
+      final parts = split
+          ? splitAssistantParagraphs(segment.text)
+          : <String>[segment.text];
+      for (final part in parts) {
+        widgets.add(
+          _buildAssistantTextBlock(
+            context,
+            part,
+            enableAssistantMarkdown,
+            citationIndexLookup,
+            contentKey: segments.length == 1 && parts.length == 1
+                ? ''
+                : '$blockKey.$blockIndex',
+          ),
+        );
+        blockIndex++;
+      }
+    }
+    return widgets;
+  }
+
+  /// Muted italic stage direction, deliberately bubble-less.
+  Widget _buildNarrationBlock(BuildContext context, String text) {
+    final cs = Theme.of(context).colorScheme;
+    final isDesktop =
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux;
+    final double base = (isDesktop ? 14.0 : 15.7) * 0.93;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: base,
+          height: 1.45,
+          fontStyle: FontStyle.italic,
+          color: cs.onSurface.withValues(alpha: 0.62),
         ),
-    ];
+      ),
+    );
   }
 
   Widget _buildAssistantTextBlock(
