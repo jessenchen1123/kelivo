@@ -2537,17 +2537,21 @@ class MessageBuilderService {
         apiMessages
           ..removeRange(startIdx, apiMessages.length)
           ..addAll(tail.sublist(tail.length - keep));
+        // Context trimming can cut in the middle of a tool-call triplet; avoid
+        // sending dangling tool messages. Runs BEFORE the notice insertion so
+        // the placeholder does not shield the leading tool rows.
+        var danglingTools = 0;
+        while (apiMessages.length > startIdx &&
+            (apiMessages[startIdx]['role'] ?? '').toString() == 'tool') {
+          apiMessages.removeAt(startIdx);
+          danglingTools++;
+        }
         insertTruncationNotice(
           apiMessages,
           startIdx: startIdx,
-          omittedCount: omitted,
+          omittedCount: omitted + danglingTools,
           summary: conversation?.summary,
         );
-      }
-      // Context trimming can cut in the middle of a tool-call triplet; avoid sending dangling tool messages.
-      while (apiMessages.length > startIdx &&
-          (apiMessages[startIdx]['role'] ?? '').toString() == 'tool') {
-        apiMessages.removeAt(startIdx);
       }
     }
   }

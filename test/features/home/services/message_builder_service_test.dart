@@ -1185,8 +1185,13 @@ void main() {
           limitContextMessages: true,
         ),
       );
-      expect(apiMessages.length, 5); // system + 4
+      expect(apiMessages.length, 6); // system + 前情提要 + 4
       expect(apiMessages.first['role'], 'system');
+      // 裁剪掉的历史以「前情提要」占位块明示（P0-c）。
+      expect(
+        (apiMessages[1]['content'] as String).contains('<previous_story>'),
+        isTrue,
+      );
       // Images in dropped history are never OCR'd because OCR runs after this trim.
       expect(
         apiMessages.any((m) => (m['content'] ?? '').toString() == 'message-0'),
@@ -1223,7 +1228,7 @@ void main() {
         ),
       );
 
-      expect(apiMessages, hasLength(2));
+      expect(apiMessages, hasLength(3)); // 前情提要 + 2
       final retainedMediaPaths = apiMessages
           .expand(
             (message) =>
@@ -1238,7 +1243,9 @@ void main() {
       expect(retainedMediaPaths, contains('/img-4.png'));
 
       final retainedUser = apiMessages.firstWhere(
-        (message) => message['role'] == 'user',
+        (message) =>
+            message['role'] == 'user' &&
+            message.containsKey(MessageBuilderService.internalRevisionIdKey),
       );
       expect(
         retainedUser[MessageBuilderService.internalRevisionIdKey],
@@ -1327,6 +1334,7 @@ void main() {
         isEmpty,
       );
       expect(apiMessages.map((message) => message['content']).toList(), [
+        startsWith('<previous_story>'),
         'done',
         'next',
       ]);
@@ -1379,6 +1387,7 @@ void main() {
         hasLength(1),
       );
       expect(apiMessages.map((message) => message['role']).toList(), [
+        'user', // 前情提要占位块
         'assistant',
         'tool',
         'assistant',
