@@ -6893,6 +6893,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contextLogSourceTruncationSummary => '前情提要';
 
   @override
+  String get contextLogSourceRoleplayContract => '扮演契约';
+
+  @override
   String get contextLogSourceChatHistory => '聊天历史';
 
   @override
@@ -19082,6 +19085,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get contextLogSourceTruncationSummary => '前情提要';
+
+  @override
+  String get contextLogSourceRoleplayContract => '扮演契约';
 
   @override
   String get contextLogSourceChatHistory => '聊天历史';
@@ -31348,6 +31354,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get contextLogSourceTruncationSummary => '前情提要';
+
+  @override
+  String get contextLogSourceRoleplayContract => '扮演契約';
 
   @override
   String get contextLogSourceChatHistory => '聊天歷史';

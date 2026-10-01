@@ -201,4 +201,73 @@ void main() {
       expect(notice, contains('No summary is available'));
     });
   });
+
+  group('injectRoleplayContract (P2: 防漂移)', () {
+    late MessageBuilderService service;
+
+    setUp(() {
+      service = MessageBuilderService(
+        chatService: ChatService(),
+        contextProvider: _FakeBuildContext(),
+      );
+    });
+
+    List<Map<String, dynamic>> buildMessages() => [
+          {'role': 'system', 'content': 'system prompt'},
+          {
+            'role': 'user',
+            'content': 'older message',
+            MessageBuilderService.internalRevisionIdKey: 'rev-1',
+          },
+          {'role': 'assistant', 'content': 'older reply'},
+          {
+            'role': 'user',
+            'content': 'newest message',
+            MessageBuilderService.internalRevisionIdKey: 'rev-2',
+          },
+        ];
+
+    test('injects before the newest user message for characters', () {
+      const assistant = Assistant(
+        id: 'c1',
+        name: '星尘旅者',
+        characterCardData: {'name': '星尘旅者'},
+      );
+      final messages = buildMessages();
+      service.injectRoleplayContract(messages, assistant);
+
+      // system, older user, older assistant, [contract], newest user.
+      expect(messages.length, 5);
+      expect(messages[3]['role'], 'user');
+      expect(
+        (messages[3]['content'] as String).startsWith('<roleplay_contract>'),
+        isTrue,
+      );
+      expect((messages[3]['content'] as String), contains('星尘旅者'));
+      expect((messages[4]['content'] as String), 'newest message');
+    });
+
+    test('plain assistants get nothing', () {
+      const assistant = Assistant(id: 'a', name: '普通助手');
+      final messages = buildMessages();
+      service.injectRoleplayContract(messages, assistant);
+      expect(messages.length, 4);
+    });
+
+    test('survives context limiting (injected after trimming)', () {
+      final assistant = const Assistant(
+        id: 'c1',
+        name: '星尘旅者',
+        characterCardData: {'name': '星尘旅者'},
+      ).copyWith(limitContextMessages: true, contextMessageSize: 2);
+      final messages = buildMessages();
+      service.applyContextLimit(messages, assistant);
+      service.injectRoleplayContract(messages, assistant);
+
+      final contractAt = messages.indexWhere(
+        (m) => (m['content'] as String).startsWith('<roleplay_contract>'),
+      );
+      expect(contractAt, greaterThanOrEqualTo(0));
+    });
+  });
 }

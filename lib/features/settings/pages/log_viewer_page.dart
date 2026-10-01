@@ -2013,6 +2013,7 @@ Color _contextSourceColor(BuildContext context, ContextSource source) {
     case ContextSource.memoryRules:
     case ContextSource.memorySnapshot:
     case ContextSource.truncationSummary:
+    case ContextSource.roleplayContract:
       return cs.tertiary;
     case ContextSource.worldBook:
       return colors.success;
@@ -2050,6 +2051,8 @@ String _contextSourceLabel(AppLocalizations l10n, ContextSource source) {
       return l10n.contextLogSourceMemorySnapshot;
     case ContextSource.truncationSummary:
       return l10n.contextLogSourceTruncationSummary;
+    case ContextSource.roleplayContract:
+      return l10n.contextLogSourceRoleplayContract;
     case ContextSource.chatHistory:
       return l10n.contextLogSourceChatHistory;
     case ContextSource.toolCall:

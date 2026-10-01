@@ -3050,6 +3050,7 @@
   "contextLogSourceWorldBook": "World book",
   "contextLogSourceMemorySnapshot": "Memory snapshot",
   "contextLogSourceTruncationSummary": "Story so far",
+  "contextLogSourceRoleplayContract": "Roleplay contract",
   "contextLogSourceChatHistory": "Chat history",
   "contextLogSourceToolCall": "Tool call",
   "contextLogSourceToolResult": "Tool result",

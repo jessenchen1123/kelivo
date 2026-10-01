@@ -209,11 +209,14 @@ void main() {
       );
       final id = await service.importFromPngBytes(avatar);
 
-      final imported = assistants.getById(id);
-      expect(imported, isNotNull);
-      expect(imported!.avatar!.startsWith('/tmp/kelivo_character_card_test'), isTrue);
-      expect(imported!.name, '星尘旅者');
-      expect(imported.presetMessages.single.content, contains('流星'));
+      final importedAssistant = assistants.getById(id);
+      expect(importedAssistant, isNotNull);
+      expect(
+        importedAssistant!.avatar ?? '',
+        startsWith('/tmp/kelivo_character_card_test'),
+      );
+      expect(importedAssistant.name, '星尘旅者');
+      expect(importedAssistant.presetMessages.single.content, contains('流星'));
 
       // The bound world book was created and activated for this character.
       final books = worldBooks.books;
@@ -225,9 +228,9 @@ void main() {
       expect(books.single.entries.length, 5);
 
       // Export → import round trip preserves the persona.
-      final exported = await service.exportToPngBytes(imported);
+      final exported = await service.exportToPngBytes(importedAssistant);
       expect(exported, isNotNull);
-      final again = CharacterCardCodec.decodeCard(exported);
+      final again = CharacterCardCodec.decodeCard(exported!);
       expect(again!.name, '星尘旅者');
       expect(again.book, isNotNull);
     });

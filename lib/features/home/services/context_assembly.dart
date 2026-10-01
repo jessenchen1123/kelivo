@@ -72,7 +72,10 @@ class ContextAssemblyPreview {
         mcpToolNames.contains((tool['function'] as Map?)?['name']);
     return ContextAssemblyPreview(
       systemText: content([ContextSource.systemPrompt]),
-      injectionsText: content([ContextSource.instructionInjection]),
+      injectionsText: content([
+        ContextSource.instructionInjection,
+        ContextSource.roleplayContract,
+      ]),
       historyText: content([
         ContextSource.chatHistory,
         ContextSource.toolCall,

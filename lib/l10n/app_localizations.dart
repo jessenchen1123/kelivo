@@ -13081,6 +13081,12 @@ abstract class AppLocalizations {
   /// **'Story so far'**
   String get contextLogSourceTruncationSummary;
 
+  /// No description provided for @contextLogSourceRoleplayContract.
+  ///
+  /// In en, this message translates to:
+  /// **'Roleplay contract'**
+  String get contextLogSourceRoleplayContract;
+
   /// No description provided for @contextLogSourceChatHistory.
   ///
   /// In en, this message translates to:

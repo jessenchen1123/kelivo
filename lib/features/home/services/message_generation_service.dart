@@ -315,6 +315,12 @@ class MessageGenerationService {
           .spec(cfg, modelId)
           .contextWindow,
     );
+    // 角色扮演契约注入在裁剪/收缩之后：位置贴近最新消息，且本身绝不会被裁掉。
+    messageBuilderService.injectRoleplayContract(
+      apiMessages,
+      assistant,
+      lang: settings.resolvedMemoryPromptLang,
+    );
 
     final mcpRouteSnapshot = generationController.captureMcpToolRoutes(
       assistant,

@@ -26,6 +26,7 @@ import '../../../utils/mcp_structured_image.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../core/services/chat/prompt_transformer.dart';
 import '../../../core/services/logging/context_log_models.dart';
+import '../../../core/services/rp/rp_contract_builder.dart';
 import '../../../core/services/memory/memory_block_builder.dart';
 import '../../../core/services/memory/memory_prompts.dart';
 import '../../../core/services/memory/memory_snapshot.dart';
@@ -2421,6 +2422,41 @@ class MessageBuilderService {
         }
       }
     } catch (_) {}
+  }
+
+  /// Inject the roleplay contract for imported characters near the END of the
+  /// context (bottom-attention position), after truncation/overflow shaping so
+  /// the block itself is never cut.
+  ///
+  /// Uses the world-book convention — role=user with a `<system>` wrapper —
+  /// because some providers reject mid-conversation system messages.
+  void injectRoleplayContract(
+    List<Map<String, dynamic>> apiMessages,
+    Assistant? assistant, {
+    MemoryPromptLang lang = MemoryPromptLang.zh,
+  }) {
+    final contract = RpContractBuilder.build(assistant, lang);
+    if (contract.isEmpty) return;
+    // Before the last *persisted* user message so it sits right above the
+    // freshest turn; regenerate flows (assistant placeholder last) also land
+    // correctly because that placeholder carries no revision id.
+    var insertAt = apiMessages.length;
+    for (var i = apiMessages.length - 1; i >= 0; i--) {
+      final message = apiMessages[i];
+      if ((message['role'] ?? '').toString() != 'user') continue;
+      if ((message[internalRevisionIdKey] ?? '').toString().trim().isEmpty) {
+        continue;
+      }
+      insertAt = i;
+      break;
+    }
+    final message = <String, dynamic>{'role': 'user', 'content': contract};
+    ContextSegmentTags.replaceWithSingle(
+      message,
+      source: ContextSource.roleplayContract,
+      length: contract.length,
+    );
+    apiMessages.insert(insertAt.clamp(0, apiMessages.length), message);
   }
 
   /// Helper to append content to the system message (or create one if missing).
