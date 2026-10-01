@@ -320,6 +320,21 @@ class AssistantProvider extends ChangeNotifier {
     return a.id;
   }
 
+  /// Insert a fully-formed assistant (e.g. imported from a character card).
+  /// The object is added as-is; the caller owns building it and its bound
+  /// resources (avatar files, world books).
+  Future<String> addAssistantObject(Assistant assistant) async {
+    final a = assistant.copyWith(
+      id: _assistants.any((existing) => existing.id == assistant.id)
+          ? const Uuid().v4()
+          : assistant.id,
+    );
+    _assistants.add(a);
+    await _persist();
+    notifyListeners();
+    return a.id;
+  }
+
   Future<String?> duplicateAssistant(
     String id, {
     AppLocalizations? l10n,

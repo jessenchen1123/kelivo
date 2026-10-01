@@ -9,6 +9,43 @@
   "@settingsSearchResultCount": {"placeholders": {"count": {"type": "int"}}},
   "helloWorld": "Hello World!",
   "settingsPageBackButton": "Back",
+  "characterLibraryPageTitle": "Characters",
+  "characterLibrarySearchHint": "Search characters…",
+  "characterLibraryEmpty": "No characters yet. Import a SillyTavern character card (PNG) to start roleplaying.",
+  "characterLibraryImport": "Import card",
+  "characterLibraryImportSuccess": "Imported \"{name}\" ({count} world book entries)",
+  "@characterLibraryImportSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "characterLibraryImportFailed": "Import failed: {error}",
+  "@characterLibraryImportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "characterLibraryReadFileFailed": "could not read the file",
+  "characterLibraryUse": "Use this character",
+  "characterLibraryEdit": "Edit character",
+  "characterLibraryExport": "Export card",
+  "characterLibraryExportSuccess": "Card exported",
+  "characterLibraryExportFailed": "Export failed: {error}",
+  "@characterLibraryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "characterLibraryNoPng": "This character has no PNG avatar to embed the card into.",
   "settingsPageTitle": "Settings",
   "settingsPageDarkMode": "Dark",
   "settingsPageLightMode": "Light",

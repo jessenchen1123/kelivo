@@ -98,6 +98,14 @@ class Assistant {
   // Regex replacement rules
   final List<AssistantRegex> regexRules;
 
+  /// Raw SillyTavern Character Card V2 `data` object when this assistant was
+  /// imported from a character card; null for regular assistants. Kept
+  /// verbatim so the card re-exports losslessly and UI can read tags /
+  /// creator / example dialogue without extra fields.
+  final Map<String, dynamic>? characterCardData;
+
+  bool get isCharacter => characterCardData != null;
+
   const Assistant({
     required this.id,
     required this.name,
@@ -145,6 +153,7 @@ class Assistant {
     this.useIso8601TimeFormat = false,
     this.presetMessages = const <PresetMessage>[],
     this.regexRules = const <AssistantRegex>[],
+    this.characterCardData,
   });
 
   Assistant copyWith({
@@ -193,6 +202,8 @@ class Assistant {
     bool? useIso8601TimeFormat,
     List<PresetMessage>? presetMessages,
     List<AssistantRegex>? regexRules,
+    Map<String, dynamic>? characterCardData,
+    bool clearCharacterCardData = false,
     bool clearChatModel = false,
     bool clearDefaultWorkspaceId = false,
     bool clearSkillIds = false,
@@ -276,6 +287,9 @@ class Assistant {
       useIso8601TimeFormat: useIso8601TimeFormat ?? this.useIso8601TimeFormat,
       presetMessages: presetMessages ?? this.presetMessages,
       regexRules: regexRules ?? this.regexRules,
+      characterCardData: clearCharacterCardData
+          ? null
+          : (characterCardData ?? this.characterCardData),
     );
   }
 
@@ -325,6 +339,7 @@ class Assistant {
     'useIso8601TimeFormat': useIso8601TimeFormat,
     'presetMessages': PresetMessage.encodeList(presetMessages),
     'regexRules': regexRules.map((e) => e.toJson()).toList(),
+    if (characterCardData != null) 'characterCardData': characterCardData,
   };
 
   static ReasoningRequest? _readReasoning(Object? value) {
@@ -475,6 +490,9 @@ class Assistant {
       }
       return const <AssistantRegex>[];
     })(),
+    characterCardData: json['characterCardData'] is Map
+        ? Map<String, dynamic>.from(json['characterCardData'] as Map)
+        : null,
   );
 
   static String memorySmartAddModeToString(MemorySmartAddMode mode) {

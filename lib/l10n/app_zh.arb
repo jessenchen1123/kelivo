@@ -8,6 +8,43 @@
   "settingsSearchResultCount": "找到 {count} 项设置",
   "helloWorld": "你好，世界！",
   "settingsPageBackButton": "返回",
+  "characterLibraryPageTitle": "角色库",
+  "characterLibrarySearchHint": "搜索角色…",
+  "characterLibraryEmpty": "还没有角色。导入一张 SillyTavern 角色卡（PNG）即可开始对话。",
+  "characterLibraryImport": "导入角色卡",
+  "characterLibraryImportSuccess": "已导入「{name}」（{count} 条世界书设定）",
+  "@characterLibraryImportSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "characterLibraryImportFailed": "导入失败：{error}",
+  "@characterLibraryImportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "characterLibraryReadFileFailed": "无法读取文件",
+  "characterLibraryUse": "使用此角色",
+  "characterLibraryEdit": "编辑角色",
+  "characterLibraryExport": "导出角色卡",
+  "characterLibraryExportSuccess": "角色卡已导出",
+  "characterLibraryExportFailed": "导出失败：{error}",
+  "@characterLibraryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "characterLibraryNoPng": "该角色没有 PNG 头像，无法嵌入卡片导出。",
   "settingsPageTitle": "设置",
   "settingsPageDarkMode": "深色",
   "settingsPageLightMode": "浅色",

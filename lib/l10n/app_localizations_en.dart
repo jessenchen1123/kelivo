@@ -45,6 +45,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPageBackButton => 'Back';
 
   @override
+  String get characterLibraryPageTitle => 'Characters';
+
+  @override
+  String get characterLibrarySearchHint => 'Search characters…';
+
+  @override
+  String get characterLibraryEmpty =>
+      'No characters yet. Import a SillyTavern character card (PNG) to start roleplaying.';
+
+  @override
+  String get characterLibraryImport => 'Import card';
+
+  @override
+  String characterLibraryImportSuccess(String name, num count) {
+    return 'Imported \"$name\" ($count world book entries)';
+  }
+
+  @override
+  String characterLibraryImportFailed(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String get characterLibraryReadFileFailed => 'could not read the file';
+
+  @override
+  String get characterLibraryUse => 'Use this character';
+
+  @override
+  String get characterLibraryEdit => 'Edit character';
+
+  @override
+  String get characterLibraryExport => 'Export card';
+
+  @override
+  String get characterLibraryExportSuccess => 'Card exported';
+
+  @override
+  String characterLibraryExportFailed(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get characterLibraryNoPng =>
+      'This character has no PNG avatar to embed the card into.';
+
+  @override
   String get settingsPageTitle => 'Settings';
 
   @override

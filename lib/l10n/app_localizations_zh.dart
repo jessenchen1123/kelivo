@@ -38,6 +38,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPageBackButton => '返回';
 
   @override
+  String get characterLibraryPageTitle => '角色库';
+
+  @override
+  String get characterLibrarySearchHint => '搜索角色…';
+
+  @override
+  String get characterLibraryEmpty => '还没有角色。导入一张 SillyTavern 角色卡（PNG）即可开始对话。';
+
+  @override
+  String get characterLibraryImport => '导入角色卡';
+
+  @override
+  String characterLibraryImportSuccess(String name, num count) {
+    return '已导入「$name」（$count 条世界书设定）';
+  }
+
+  @override
+  String characterLibraryImportFailed(String error) {
+    return '导入失败：$error';
+  }
+
+  @override
+  String get characterLibraryReadFileFailed => '无法读取文件';
+
+  @override
+  String get characterLibraryUse => '使用此角色';
+
+  @override
+  String get characterLibraryEdit => '编辑角色';
+
+  @override
+  String get characterLibraryExport => '导出角色卡';
+
+  @override
+  String get characterLibraryExportSuccess => '角色卡已导出';
+
+  @override
+  String characterLibraryExportFailed(String error) {
+    return '导出失败：$error';
+  }
+
+  @override
+  String get characterLibraryNoPng => '该角色没有 PNG 头像，无法嵌入卡片导出。';
+
+  @override
   String get settingsPageTitle => '设置';
 
   @override
@@ -12258,6 +12303,51 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get settingsPageBackButton => '返回';
 
   @override
+  String get characterLibraryPageTitle => '角色库';
+
+  @override
+  String get characterLibrarySearchHint => '搜索角色…';
+
+  @override
+  String get characterLibraryEmpty => '还没有角色。导入一张 SillyTavern 角色卡（PNG）即可开始对话。';
+
+  @override
+  String get characterLibraryImport => '导入角色卡';
+
+  @override
+  String characterLibraryImportSuccess(String name, num count) {
+    return '已导入「$name」（$count 条世界书设定）';
+  }
+
+  @override
+  String characterLibraryImportFailed(String error) {
+    return '导入失败：$error';
+  }
+
+  @override
+  String get characterLibraryReadFileFailed => '无法读取文件';
+
+  @override
+  String get characterLibraryUse => '使用此角色';
+
+  @override
+  String get characterLibraryEdit => '编辑角色';
+
+  @override
+  String get characterLibraryExport => '导出角色卡';
+
+  @override
+  String get characterLibraryExportSuccess => '角色卡已导出';
+
+  @override
+  String characterLibraryExportFailed(String error) {
+    return '导出失败：$error';
+  }
+
+  @override
+  String get characterLibraryNoPng => '该角色没有 PNG 头像，无法嵌入卡片导出。';
+
+  @override
   String get settingsPageTitle => '设置';
 
   @override
@@ -24402,6 +24492,51 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsPageBackButton => '返回';
+
+  @override
+  String get characterLibraryPageTitle => '角色庫';
+
+  @override
+  String get characterLibrarySearchHint => '搜尋角色…';
+
+  @override
+  String get characterLibraryEmpty => '還沒有角色。匯入一張 SillyTavern 角色卡（PNG）即可開始對話。';
+
+  @override
+  String get characterLibraryImport => '匯入角色卡';
+
+  @override
+  String characterLibraryImportSuccess(String name, num count) {
+    return '已匯入「$name」（$count 條世界書設定）';
+  }
+
+  @override
+  String characterLibraryImportFailed(String error) {
+    return '匯入失敗：$error';
+  }
+
+  @override
+  String get characterLibraryReadFileFailed => '無法讀取檔案';
+
+  @override
+  String get characterLibraryUse => '使用此角色';
+
+  @override
+  String get characterLibraryEdit => '編輯角色';
+
+  @override
+  String get characterLibraryExport => '匯出角色卡';
+
+  @override
+  String get characterLibraryExportSuccess => '角色卡已匯出';
+
+  @override
+  String characterLibraryExportFailed(String error) {
+    return '匯出失敗：$error';
+  }
+
+  @override
+  String get characterLibraryNoPng => '該角色沒有 PNG 頭像，無法嵌入卡片匯出。';
 
   @override
   String get settingsPageTitle => '設定';

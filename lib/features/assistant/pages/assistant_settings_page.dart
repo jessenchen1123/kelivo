@@ -9,6 +9,7 @@ import '../../../core/models/assistant.dart';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'assistant_settings_edit_page.dart';
+import '../../character/pages/character_library_page.dart';
 import '../../../utils/avatar_cache.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../core/services/haptics.dart';
@@ -40,6 +41,21 @@ class AssistantSettingsPage extends StatelessWidget {
         ),
         title: Text(l10n.assistantSettingsPageTitle),
         actions: [
+          Tooltip(
+            message: l10n.characterLibraryPageTitle,
+            child: _TactileIconButton(
+              icon: Lucide.WandSparkles,
+              color: cs.onSurface,
+              size: 22,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const CharacterLibraryPage(),
+                  ),
+                );
+              },
+            ),
+          ),
           Tooltip(
             message: l10n.assistantSettingsAddSheetSave,
             child: _TactileIconButton(

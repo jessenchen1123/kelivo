@@ -154,6 +154,84 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get settingsPageBackButton;
 
+  /// No description provided for @characterLibraryPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters'**
+  String get characterLibraryPageTitle;
+
+  /// No description provided for @characterLibrarySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search characters…'**
+  String get characterLibrarySearchHint;
+
+  /// No description provided for @characterLibraryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No characters yet. Import a SillyTavern character card (PNG) to start roleplaying.'**
+  String get characterLibraryEmpty;
+
+  /// No description provided for @characterLibraryImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import card'**
+  String get characterLibraryImport;
+
+  /// No description provided for @characterLibraryImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported \"{name}\" ({count} world book entries)'**
+  String characterLibraryImportSuccess(String name, num count);
+
+  /// No description provided for @characterLibraryImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed: {error}'**
+  String characterLibraryImportFailed(String error);
+
+  /// No description provided for @characterLibraryReadFileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'could not read the file'**
+  String get characterLibraryReadFileFailed;
+
+  /// No description provided for @characterLibraryUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this character'**
+  String get characterLibraryUse;
+
+  /// No description provided for @characterLibraryEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit character'**
+  String get characterLibraryEdit;
+
+  /// No description provided for @characterLibraryExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export card'**
+  String get characterLibraryExport;
+
+  /// No description provided for @characterLibraryExportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Card exported'**
+  String get characterLibraryExportSuccess;
+
+  /// No description provided for @characterLibraryExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String characterLibraryExportFailed(String error);
+
+  /// No description provided for @characterLibraryNoPng.
+  ///
+  /// In en, this message translates to:
+  /// **'This character has no PNG avatar to embed the card into.'**
+  String get characterLibraryNoPng;
+
   /// No description provided for @settingsPageTitle.
   ///
   /// In en, this message translates to:
