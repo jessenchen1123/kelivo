@@ -325,6 +325,8 @@ class SettingsProvider extends ChangeNotifier {
   static const String _displayAssistantBubbleFitContentKey =
       'display_assistant_bubble_fit_content_v1';
   static const String _displayRpNarrationStyleKey = 'rp_narration_style_v1';
+  static const String _displayImmersiveChatModeKey =
+      'display_immersive_chat_mode_v1';
   static const String _displayAssistantBubbleSplitParagraphsKey =
       'display_assistant_bubble_split_paragraphs_v1';
   static const String _displayChatMessageBackgroundStyleKey =
@@ -546,6 +548,11 @@ class SettingsProvider extends ChangeNotifier {
   // this fork targets roleplay first.
   bool _rpNarrationStyle = true;
   bool get rpNarrationStyle => _rpNarrationStyle;
+
+  // Immersive chat (P3): hides the chat top bar for full-bleed roleplay.
+  // Exit via the floating affordance; re-enter by long-pressing the title.
+  bool _immersiveChatMode = false;
+  bool get immersiveChatMode => _immersiveChatMode;
 
   // Desktop UI persisted state
   double _desktopSidebarWidth = 240;
@@ -1125,6 +1132,8 @@ class SettingsProvider extends ChangeNotifier {
     _assistantBubbleSplitParagraphs =
         prefs.getBool(_displayAssistantBubbleSplitParagraphsKey) ?? false;
     _rpNarrationStyle = prefs.getBool(_displayRpNarrationStyleKey) ?? true;
+    _immersiveChatMode =
+        prefs.getBool(_displayImmersiveChatModeKey) ?? false;
     // display: markdown/math rendering
     _enableDollarLatex = prefs.getBool(_displayEnableDollarLatexKey) ?? true;
     _enableMathRendering =
@@ -2628,6 +2637,13 @@ class SettingsProvider extends ChangeNotifier {
     _rpNarrationStyle = v;
     notifyListeners();
     await _preferences.setBool(_displayRpNarrationStyleKey, v);
+  }
+
+  Future<void> setImmersiveChatMode(bool v) async {
+    if (_immersiveChatMode == v) return;
+    _immersiveChatMode = v;
+    notifyListeners();
+    await _preferences.setBool(_displayImmersiveChatModeKey, v);
   }
 
   Future<void> setUseLayeredSheetTiles(bool v) async {

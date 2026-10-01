@@ -124,10 +124,30 @@ class HomeMobileScaffold extends StatelessWidget {
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
           appBar: appBarOverride ?? _buildAppBar(context, cs),
-          body: body,
+          body: context.watch<SettingsProvider>().immersiveChatMode
+              ? Stack(
+                  children: [
+                    body,
+                    Positioned(
+                      top: MediaQuery.paddingOf(context).top + 4,
+                      right: 12,
+                      child: _ImmersiveExitButton(
+                        onTap: () => context
+                            .read<SettingsProvider>()
+                            .setImmersiveChatMode(false),
+                      ),
+                    ),
+                  ],
+                )
+              : body,
         ),
       ),
     );
+  }
+
+  void _enterImmersiveMode(BuildContext context) {
+    Haptics.medium();
+    context.read<SettingsProvider>().setImmersiveChatMode(true);
   }
 
   String _getAssistantName(BuildContext context) {
@@ -138,6 +158,13 @@ class HomeMobileScaffold extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, ColorScheme cs) {
+    // 沉浸模式：隐藏整个顶栏（长按标题进入，右上角悬浮按钮退出）。
+    if (context.watch<SettingsProvider>().immersiveChatMode) {
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(0),
+        child: const SizedBox.shrink(),
+      );
+    }
     final isDesktopPlatform =
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
@@ -192,11 +219,14 @@ class HomeMobileScaffold extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AnimatedTextSwap(
-                        text: title,
-                        style: TextStyle(
-                          fontSize: isDesktopPlatform ? 14 : 16,
-                          fontWeight: AppFontWeights.medium,
+                      GestureDetector(
+                        onLongPress: () => _enterImmersiveMode(context),
+                        child: AnimatedTextSwap(
+                          text: title,
+                          style: TextStyle(
+                            fontSize: isDesktopPlatform ? 14 : 16,
+                            fontWeight: AppFontWeights.medium,
+                          ),
                         ),
                       ),
                       if (providerName != null && modelDisplay != null)
@@ -229,11 +259,14 @@ class HomeMobileScaffold extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedTextSwap(
-                  text: title,
-                  style: TextStyle(
-                    fontSize: isDesktopPlatform ? 14 : 16,
-                    fontWeight: AppFontWeights.medium,
+                GestureDetector(
+                  onLongPress: () => _enterImmersiveMode(context),
+                  child: AnimatedTextSwap(
+                    text: title,
+                    style: TextStyle(
+                      fontSize: isDesktopPlatform ? 14 : 16,
+                      fontWeight: AppFontWeights.medium,
+                    ),
                   ),
                 ),
                 if (providerName != null && modelDisplay != null)
@@ -607,6 +640,35 @@ class _GlassCircleButtonState extends State<_GlassCircleButton> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Tiny translucent affordance that leaves immersive mode.
+class _ImmersiveExitButton extends StatelessWidget {
+  const _ImmersiveExitButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: cs.surface.withValues(alpha: 0.55),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(
+            Lucide.ChevronDown,
+            size: 16,
+            color: cs.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ),
