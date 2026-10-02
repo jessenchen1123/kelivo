@@ -10,6 +10,7 @@ class ConversationGroupChat {
   static const String keyEnabled = 'groupChat.enabled';
   static const String keyMembers = 'groupChat.members';
   static const String keyTurnIndex = 'groupChat.turnIndex';
+  static const String keyDirector = 'groupChat.director';
 
   /// Minimum participants for an actual group (a single member is just a
   /// normal 1:1 conversation and must not enable group mode).
@@ -19,10 +20,15 @@ class ConversationGroupChat {
   final List<String> members;
   final int turnIndex;
 
+  /// P5 导演调度：每条回复后由一次隐形元调用决定下一个发言者，
+  /// 允许同一人连续发言与两人对谈；关闭时为纯轮转。
+  final bool directorEnabled;
+
   const ConversationGroupChat({
     this.enabled = false,
     this.members = const <String>[],
     this.turnIndex = 0,
+    this.directorEnabled = false,
   });
 
   bool get isGroup => enabled && members.length >= minMembers;
@@ -37,6 +43,7 @@ class ConversationGroupChat {
       enabled: extras[keyEnabled] as bool? ?? false,
       members: members,
       turnIndex: (extras[keyTurnIndex] as num?)?.toInt() ?? 0,
+      directorEnabled: extras[keyDirector] as bool? ?? false,
     );
   }
 
@@ -48,11 +55,13 @@ class ConversationGroupChat {
       next.remove(keyEnabled);
       next.remove(keyMembers);
       next.remove(keyTurnIndex);
+      next.remove(keyDirector);
       return next;
     }
     next[keyEnabled] = enabled;
     next[keyMembers] = members;
     next[keyTurnIndex] = turnIndex;
+    next[keyDirector] = directorEnabled;
     return next;
   }
 
@@ -60,11 +69,13 @@ class ConversationGroupChat {
     bool? enabled,
     List<String>? members,
     int? turnIndex,
+    bool? directorEnabled,
   }) {
     return ConversationGroupChat(
       enabled: enabled ?? this.enabled,
       members: members ?? this.members,
       turnIndex: turnIndex ?? this.turnIndex,
+      directorEnabled: directorEnabled ?? this.directorEnabled,
     );
   }
 }

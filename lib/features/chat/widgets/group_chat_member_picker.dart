@@ -19,14 +19,19 @@ import '../../../utils/sandbox_path_resolver.dart';
 /// P5 群聊：多选角色建立群聊会话。
 ///
 /// 返回按选择顺序排列的成员 assistant id 列表（首位是主持人），取消返回 null。
-Future<List<String>?> showGroupChatMemberPicker(BuildContext context) async {
+/// Picker result: ordered member ids plus the director-scheduling flag.
+typedef GroupChatPickerResult = ({List<String> members, bool director});
+
+Future<GroupChatPickerResult?> showGroupChatMemberPicker(
+  BuildContext context,
+) async {
   final isDesktop =
       defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.linux;
   if (!isDesktop) {
     final maxHeight = MediaQuery.of(context).size.height * 0.8;
-    return showModalBottomSheet<List<String>>(
+    return showModalBottomSheet<GroupChatPickerResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: context.overlaySurface,
@@ -49,7 +54,7 @@ Future<List<String>?> showGroupChatMemberPicker(BuildContext context) async {
     );
   }
   // Desktop: plain dialog hosting the same body.
-  return showDialog<List<String>>(
+  return showDialog<GroupChatPickerResult>(
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
@@ -81,6 +86,7 @@ class _GroupMemberPickerBody extends StatefulWidget {
 
 class _GroupMemberPickerBodyState extends State<_GroupMemberPickerBody> {
   final List<String> _selected = <String>[];
+  bool _directorEnabled = false;
 
   void _toggle(Assistant a) {
     Haptics.light();
@@ -91,6 +97,11 @@ class _GroupMemberPickerBodyState extends State<_GroupMemberPickerBody> {
         _selected.add(a.id);
       }
     });
+  }
+
+  void _toggleDirector() {
+    Haptics.light();
+    setState(() => _directorEnabled = !_directorEnabled);
   }
 
   @override
@@ -141,6 +152,43 @@ class _GroupMemberPickerBodyState extends State<_GroupMemberPickerBody> {
             ),
           ),
           const SizedBox(height: 12),
+          // P5 导演调度开关：隐形元调用决定谁接话，允许连续发言与两人对谈。
+          SizedBox(
+            height: 48,
+            child: IosCardPress(
+              borderRadius: BorderRadius.circular(14),
+              baseColor: Theme.of(context).cardColor.withValues(alpha: 0.4),
+              duration: const Duration(milliseconds: 260),
+              onTap: _toggleDirector,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.movie_creation_outlined,
+                    size: 20,
+                    color: _directorEnabled
+                        ? cs.primary
+                        : cs.onSurface.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.groupChatDirectorToggleLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: AppFontWeights.medium,
+                      ),
+                    ),
+                  ),
+                  Switch(
+                    value: _directorEnabled,
+                    onChanged: (_) => _toggleDirector(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           IosCardPress(
             borderRadius: BorderRadius.circular(14),
             baseColor: canStart
@@ -148,7 +196,10 @@ class _GroupMemberPickerBodyState extends State<_GroupMemberPickerBody> {
                 : cs.onSurface.withValues(alpha: 0.05),
             duration: const Duration(milliseconds: 260),
             onTap: canStart
-                ? () => Navigator.of(context).pop(List<String>.of(_selected))
+                ? () => Navigator.of(context).pop((
+                    members: List<String>.of(_selected),
+                    director: _directorEnabled,
+                  ))
                 : null,
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Center(

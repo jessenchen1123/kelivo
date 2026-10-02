@@ -100,6 +100,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupChatTitlePrefix => '群聊：';
 
   @override
+  String get groupChatDirectorToggleLabel => '导演调度';
+
+  @override
+  String get groupChatDirectorToggleSubtitle => '由隐形导演决定谁接话，允许连续发言与两人对谈';
+
+  @override
+  String get defaultModelPageDirectorModelTitle => '导演模型';
+
+  @override
+  String get defaultModelPageDirectorModelSubtitle => '群聊调度决策用的轻量模型，未设置时跟随标题模型';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -12430,6 +12442,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get groupChatTitlePrefix => '群聊：';
 
   @override
+  String get groupChatDirectorToggleLabel => '导演调度';
+
+  @override
+  String get groupChatDirectorToggleSubtitle => '由隐形导演决定谁接话，允许连续发言与两人对谈';
+
+  @override
+  String get defaultModelPageDirectorModelTitle => '导演模型';
+
+  @override
+  String get defaultModelPageDirectorModelSubtitle => '群聊调度决策用的轻量模型，未设置时跟随标题模型';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -24684,6 +24708,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupChatTitlePrefix => '群聊：';
+
+  @override
+  String get groupChatDirectorToggleLabel => '導演調度';
+
+  @override
+  String get groupChatDirectorToggleSubtitle => '由隱形導演決定誰接話，允許連續發言與兩人對談';
+
+  @override
+  String get defaultModelPageDirectorModelTitle => '導演模型';
+
+  @override
+  String get defaultModelPageDirectorModelSubtitle => '群聊調度決策用的輕量模型，未設置時跟隨標題模型';
 
   @override
   String get characterLibrarySearchHint => '搜尋角色…';

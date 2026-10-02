@@ -105,6 +105,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _selectedModelKey = 'selected_model_v1';
   static const String _perChatModelEnabledKey = 'per_chat_model_enabled_v1';
   static const String _titleModelKey = 'title_model_v1';
+  static const String _directorModelKey = 'director_model_v1';
   static const String _titleGenerationEnabledKey =
       'title_generation_enabled_v1';
   static const String _titlePromptKey = 'title_prompt_v1';
@@ -773,6 +774,15 @@ class SettingsProvider extends ChangeNotifier {
       if (parts.length >= 2) {
         _titleModelProvider = parts[0];
         _titleModelId = parts.sublist(1).join('::');
+      }
+    }
+    // load group-chat director model (P5)
+    final directorSel = prefs.getString(_directorModelKey);
+    if (directorSel != null && directorSel.contains('::')) {
+      final parts = directorSel.split('::');
+      if (parts.length >= 2) {
+        _directorModelProvider = parts[0];
+        _directorModelId = parts.sublist(1).join('::');
       }
     }
     _perChatModelEnabled = prefs.getBool(_perChatModelEnabledKey) ?? false;
@@ -3271,6 +3281,12 @@ class SettingsProvider extends ChangeNotifier {
       await prefs.setBool(_titleGenerationEnabledKey, false);
       changed = true;
     }
+    if (_directorModelProvider == providerKey) {
+      _directorModelProvider = null;
+      _directorModelId = null;
+      await prefs.remove(_directorModelKey);
+      changed = true;
+    }
     if (_translateModelProvider == providerKey) {
       _translateModelProvider = null;
       _translateModelId = null;
@@ -3341,6 +3357,12 @@ class SettingsProvider extends ChangeNotifier {
       _translateModelProvider = null;
       _translateModelId = null;
       await prefs.remove(_translateModelKey);
+      changed = true;
+    }
+    if (_directorModelProvider == providerKey && _directorModelId == modelId) {
+      _directorModelProvider = null;
+      _directorModelId = null;
+      await prefs.remove(_directorModelKey);
       changed = true;
     }
     if (_ocrModelProvider == providerKey && _ocrModelId == modelId) {
@@ -3589,6 +3611,30 @@ You need to summarize the conversation between user and assistant into a short t
     final prefs = _preferences;
     await prefs.remove(_titleModelKey);
     await prefs.setBool(_titleGenerationEnabledKey, false);
+  }
+
+  // Group-chat director model (P5). Unset means the title-model fallback
+  // chain applies (title model -> current default).
+  String? _directorModelProvider;
+  String? _directorModelId;
+
+  String? get directorModelProvider => _directorModelProvider;
+  String? get directorModelId => _directorModelId;
+
+  Future<void> setDirectorModel(String providerKey, String modelId) async {
+    _directorModelProvider = providerKey;
+    _directorModelId = modelId;
+    notifyListeners();
+    final prefs = _preferences;
+    await prefs.setString(_directorModelKey, '$providerKey::$modelId');
+  }
+
+  Future<void> resetDirectorModel() async {
+    _directorModelProvider = null;
+    _directorModelId = null;
+    notifyListeners();
+    final prefs = _preferences;
+    await prefs.remove(_directorModelKey);
   }
 
   Future<void> setTitlePrompt(String prompt) async {
@@ -5713,6 +5759,8 @@ Requirements:
     copy._titleModelId = _titleModelId;
     copy._titleGenerationEnabled = _titleGenerationEnabled;
     copy._titlePrompt = _titlePrompt;
+    copy._directorModelProvider = _directorModelProvider;
+    copy._directorModelId = _directorModelId;
     copy._summaryModelProvider = _summaryModelProvider;
     copy._summaryModelId = _summaryModelId;
     copy._summaryPrompt = _summaryPrompt;

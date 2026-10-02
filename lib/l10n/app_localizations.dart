@@ -274,6 +274,30 @@ abstract class AppLocalizations {
   /// **'Group: '**
   String get groupChatTitlePrefix;
 
+  /// No description provided for @groupChatDirectorToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Director scheduling'**
+  String get groupChatDirectorToggleLabel;
+
+  /// No description provided for @groupChatDirectorToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'An invisible director picks who speaks next — consecutive lines and pair dialogues allowed'**
+  String get groupChatDirectorToggleSubtitle;
+
+  /// No description provided for @defaultModelPageDirectorModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Director model'**
+  String get defaultModelPageDirectorModelTitle;
+
+  /// No description provided for @defaultModelPageDirectorModelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheap fast model for group-chat scheduling decisions. Falls back to the title model when unset'**
+  String get defaultModelPageDirectorModelSubtitle;
+
   /// No description provided for @characterLibrarySearchHint.
   ///
   /// In en, this message translates to:

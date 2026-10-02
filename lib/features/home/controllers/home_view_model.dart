@@ -1088,7 +1088,10 @@ class HomeViewModel extends ChangeNotifier {
 
   /// P5 群聊：建立带群聊 extras 的草稿会话并切换过去。
   /// 返回是否成功创建。
-  Future<bool> createGroupConversation(List<String> memberIds) async {
+  Future<bool> createGroupConversation(
+    List<String> memberIds, {
+    bool director = false,
+  }) async {
     if (memberIds.length < ConversationGroupChat.minMembers) return false;
     await _chatActions.flushConversationProgress(currentConversation);
     if (!_contextProvider.mounted) return false;
@@ -1119,7 +1122,7 @@ class HomeViewModel extends ChangeNotifier {
       conversation.id,
       (extras) => const ConversationGroupChat(
         enabled: true,
-      ).copyWith(members: memberIds).applyTo(extras),
+      ).copyWith(members: memberIds, directorEnabled: director).applyTo(extras),
     );
 
     _chatController.setDraftConversation(

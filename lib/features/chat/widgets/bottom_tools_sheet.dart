@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/models/assistant.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/models/skills_binding.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
@@ -59,7 +60,7 @@ class BottomToolsSheet extends StatelessWidget {
   final VoidCallback? onClose;
 
   /// P5 群聊：成员多选完成后回调（建群逻辑在持有 ChatController 的宿主里）。
-  final ValueChanged<List<String>>? onStartGroupChat;
+  final ValueChanged<({List<String> members, bool director})>? onStartGroupChat;
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +228,7 @@ class _LearningAndClearSection extends StatefulWidget {
   final VoidCallback? onClose;
 
   /// P5 群聊：成员多选完成后回调（建群逻辑在持有 ChatController 的宿主里）。
-  final ValueChanged<List<String>>? onStartGroupChat;
+  final ValueChanged<({List<String> members, bool director})>? onStartGroupChat;
 
   @override
   State<_LearningAndClearSection> createState() =>
@@ -269,6 +270,24 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
     }
   }
 
+  /// P5：当前会话是否为群聊（决定是否显示导演调度开关）。
+  bool _isGroupConversation(ChatService chat) {
+    final id = widget.conversationId;
+    if (id == null) return false;
+    return ConversationGroupChat.fromExtras(
+      chat.getConversation(id)?.extras ?? const {},
+    ).isGroup;
+  }
+
+  /// P5：当前群聊会话是否启用导演调度。
+  bool _isDirectorEnabled(ChatService chat) {
+    final id = widget.conversationId;
+    if (id == null) return false;
+    return ConversationGroupChat.fromExtras(
+      chat.getConversation(id)?.extras ?? const {},
+    ).directorEnabled;
+  }
+
   Future<void> _openSessionSkills() async {
     Haptics.light();
     final id = await ensureConversationId(
@@ -287,11 +306,14 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
 
   /// P5 群聊：多选角色后交给宿主建群。
   Future<void> _startGroupChat(BuildContext context) async {
-    final members = await showGroupChatMemberPicker(context);
-    if (members == null || members.length < 2) return;
+    final result = await showGroupChatMemberPicker(context);
+    if (result == null || result.members.length < 2) return;
     if (!context.mounted) return;
     Navigator.of(context).maybePop();
-    widget.onStartGroupChat?.call(members);
+    widget.onStartGroupChat?.call((
+      members: result.members,
+      director: result.director,
+    ));
   }
 
   @override
@@ -490,6 +512,30 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
             Navigator.of(context).maybePop();
           },
         ),
+        // P5 导演调度开关：仅群聊会话显示，切换当前会话的调度策略。
+        if (_isGroupConversation(chat)) ...[
+          const SizedBox(height: 8),
+          ToolsSheetRow(
+            icon: Lucide.Drama,
+            label: l10n.groupChatDirectorToggleLabel,
+            subtitle: l10n.groupChatDirectorToggleSubtitle,
+            selected: _isDirectorEnabled(chat),
+            onTap: () async {
+              Haptics.light();
+              final id = widget.conversationId;
+              if (id == null) return;
+              await chat.updateConversationExtras(id, (extras) {
+                final group = ConversationGroupChat.fromExtras(extras);
+                if (!group.isGroup) return extras;
+                return group
+                    .copyWith(directorEnabled: !group.directorEnabled)
+                    .applyTo(extras);
+              });
+              if (!context.mounted) return;
+              Navigator.of(context).maybePop();
+            },
+          ),
+        ],
         const SizedBox(height: 8),
         ToolsSheetRow(
           icon: Lucide.workflow,

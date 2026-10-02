@@ -109,6 +109,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupChatTitlePrefix => 'Group: ';
 
   @override
+  String get groupChatDirectorToggleLabel => 'Director scheduling';
+
+  @override
+  String get groupChatDirectorToggleSubtitle =>
+      'An invisible director picks who speaks next — consecutive lines and pair dialogues allowed';
+
+  @override
+  String get defaultModelPageDirectorModelTitle => 'Director model';
+
+  @override
+  String get defaultModelPageDirectorModelSubtitle =>
+      'Cheap fast model for group-chat scheduling decisions. Falls back to the title model when unset';
+
+  @override
   String get characterLibrarySearchHint => 'Search characters…';
 
   @override

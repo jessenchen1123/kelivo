@@ -1319,7 +1319,10 @@ class HomePageController extends ChangeNotifier {
   }
 
   /// P5 群聊：按成员顺序建立群聊草稿会话（首位成员为主持人）。
-  Future<void> startGroupChat(List<String> memberIds) async {
+  Future<void> startGroupChat(
+    List<String> memberIds, {
+    bool director = false,
+  }) async {
     if (memberIds.length < ConversationGroupChat.minMembers) return;
     _switchSerial++;
     _warmupSerial++;
@@ -1334,7 +1337,10 @@ class HomePageController extends ChangeNotifier {
         await _convoFadeController.reverse();
       } catch (_) {}
     }
-    final created = await _viewModel.createGroupConversation(memberIds);
+    final created = await _viewModel.createGroupConversation(
+      memberIds,
+      director: director,
+    );
     if (created && currentConversation?.id != null) {
       _clearSelectionState();
     }

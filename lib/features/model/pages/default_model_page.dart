@@ -250,6 +250,29 @@ class DefaultModelPage extends StatelessWidget {
             },
             configAction: () => showOcrPromptSheet(context),
           ),
+          const SizedBox(height: 16),
+          _ModelCard(
+            icon: Lucide.Drama,
+            title: l10n.defaultModelPageDirectorModelTitle,
+            subtitle: l10n.defaultModelPageDirectorModelSubtitle,
+            modelProvider: settings.directorModelProvider,
+            modelId: settings.directorModelId,
+            fallbackProvider:
+                settings.titleModelProvider ?? settings.currentModelProvider,
+            fallbackModelId: settings.titleModelId ?? settings.currentModelId,
+            onReset: () async {
+              await settings.resetDirectorModel();
+            },
+            onPick: () async {
+              final sel = await pickConfiguredModel(
+                settings.directorModelProvider,
+                settings.directorModelId,
+              );
+              if (sel != null) {
+                await settings.setDirectorModel(sel.providerKey, sel.modelId);
+              }
+            },
+          ),
         ],
       ),
     );
