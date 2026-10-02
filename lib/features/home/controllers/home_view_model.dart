@@ -1770,9 +1770,12 @@ class HomeViewModel extends ChangeNotifier {
 
     // Get all messages and filter user messages
     final msgs = await _chatService.loadMessages(convo.id);
-    final allUserMsgs = msgs
-        .where((m) => m.role == 'user' && m.content.trim().isNotEmpty)
-        .toList();
+    // P5 第四墙：导演频道不进摘要——摘要会作为 <previous_story> 注入角色上下文。
+    bool isSummaryUserMessage(ChatMessage m) =>
+        m.role == 'user' &&
+        m.content.trim().isNotEmpty &&
+        m.characterId != ConversationGroupChat.directorMarkerId;
+    final allUserMsgs = msgs.where(isSummaryUserMessage).toList();
 
     if (allUserMsgs.isEmpty) return;
 
@@ -1785,8 +1788,9 @@ class HomeViewModel extends ChangeNotifier {
         ? 0
         : convo.lastSummarizedMessageCount;
     final msgsAtLastSummary = msgs.take(lastSummarizedMsgCount).toList();
+    // 必须和 allUserMsgs 用同一个判定，否则 skip 的偏移量会错位。
     final userMsgsAtLastSummary = msgsAtLastSummary
-        .where((m) => m.role == 'user' && m.content.trim().isNotEmpty)
+        .where(isSummaryUserMessage)
         .length;
 
     // Get new user messages since last summary

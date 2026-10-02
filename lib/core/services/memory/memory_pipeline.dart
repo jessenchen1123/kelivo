@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../database/chat_database_repository.dart';
 import '../../models/assistant.dart';
+import '../../models/conversation_group_chat.dart';
 import '../../models/reasoning_request.dart';
 import '../../models/chat_message.dart';
 import '../../models/memory_entry.dart';
@@ -480,6 +481,9 @@ class MemoryPipelineService {
     final withOrder = <({ChatMessage message, int order})>[];
     for (final m in selected) {
       if (m.isStreaming) continue;
+      // P5 第四墙：用户↔导演的私聊不能进记忆，否则提取出的「用户说要让 A 和 B
+      // 吵架」会被写进 <user_memory> 再注入回角色上下文——角色就"看见"了。
+      if (m.characterId == ConversationGroupChat.directorMarkerId) continue;
       final order = chatService.getMessageIndex(job.conversationId, m.id);
       if (order < 0) continue;
       if (order <= watermark) continue;
