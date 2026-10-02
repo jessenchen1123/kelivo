@@ -90,6 +90,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get immersiveModeRowSubtitle => 'Hide the top bar for full-bleed chat';
 
   @override
+  String get groupChatRowLabel => 'Character group chat';
+
+  @override
+  String get groupChatRowSubtitle =>
+      'Pick 2+ characters — they take turns and reply in one conversation';
+
+  @override
+  String get groupChatPickerTitle => 'Select group members';
+
+  @override
+  String get groupChatPickerStart => 'Start group chat';
+
+  @override
+  String get groupChatPickerMinHint => 'Select at least 2 characters';
+
+  @override
+  String get groupChatTitlePrefix => 'Group: ';
+
+  @override
   String get characterLibrarySearchHint => 'Search characters…';
 
   @override

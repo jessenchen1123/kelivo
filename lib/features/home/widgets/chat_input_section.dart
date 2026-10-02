@@ -11,6 +11,7 @@ import '../../../core/services/api/reasoning/reasoning_dialects.dart';
 import '../../../core/services/api/reasoning/reasoning_selection.dart';
 import '../../../core/services/model_spec/model_spec_resolver.dart';
 import '../../../core/models/workspace_binding.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/models/skills_binding.dart';
 import '../../../core/providers/asr_provider.dart';
 import '../../../core/providers/settings_provider.dart';
@@ -24,6 +25,7 @@ import '../../../core/services/skills/skills_service.dart';
 import '../../../features/workspace/widgets/environment/environment_status_chip.dart';
 import '../../../features/workspace/workspace_navigation.dart';
 import '../../../theme/design_tokens.dart';
+import '../../chat/widgets/group_chat_member_picker.dart' show memberAvatar;
 import 'chat_input_bar.dart';
 import 'model_icon.dart';
 
@@ -270,7 +272,28 @@ class ChatInputSection extends StatelessWidget {
       inputBackgroundOpacityDark: settings.chatInputBackgroundOpacityDark,
     );
 
-    if (!showEnvChip || !workspaceBound) return bar;
+    final groupMembers = _groupMembers(context);
+    Widget result = bar;
+    if (groupMembers != null) {
+      // P5 群聊：输入框上方显示参与角色 chips。
+      result = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.xxs,
+              AppSpacing.sm,
+              0,
+            ),
+            child: _GroupMembersChips(members: groupMembers),
+          ),
+          Flexible(child: result),
+        ],
+      );
+    }
+    if (!showEnvChip || !workspaceBound) return result;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,9 +310,32 @@ class ChatInputSection extends StatelessWidget {
               onTap: () => WorkspaceNavigation.openEnvironmentPage(context),
             ),
           ),
-        Flexible(child: bar),
+        Flexible(child: result),
       ],
     );
+  }
+
+  /// P5 群聊：当前会话的群成员列表；非群聊返回 null。
+  List<Assistant>? _groupMembers(BuildContext context) {
+    final id = conversationId;
+    if (id == null) return null;
+    try {
+      final conversation = context.select<ChatService, dynamic>(
+        (chat) => chat.getConversation(id),
+      );
+      if (conversation == null) return null;
+      final group = ConversationGroupChat.fromExtras(
+        conversation.extras as Map<String, dynamic>,
+      );
+      if (!group.isGroup) return null;
+      final ap = context.read<AssistantProvider>();
+      return <Assistant>[
+        for (final memberId in group.members)
+          if (ap.getById(memberId) case final Assistant member) member,
+      ];
+    } catch (_) {
+      return null;
+    }
   }
 
   bool _isPromptSelectionActive(
@@ -410,5 +456,51 @@ class ChatInputSection extends StatelessWidget {
         ? quickPhraseProvider.getForAssistant(a.id).length
         : 0;
     return (globalCount + assistantCount) > 0;
+  }
+}
+
+/// P5 群聊：输入框上方的参与角色 chips 条（按发言轮转顺序排列）。
+class _GroupMembersChips extends StatelessWidget {
+  const _GroupMembersChips({required this.members});
+
+  final List<Assistant> members;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < members.length; i++)
+            Padding(
+              padding: EdgeInsets.only(right: i == members.length - 1 ? 0 : 6),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
+                decoration: BoxDecoration(
+                  color: cs.onSurface.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    memberAvatar(context, members[i], size: 20),
+                    const SizedBox(width: 6),
+                    Text(
+                      members[i].name.trim().isEmpty
+                          ? '?'
+                          : members[i].name.trim(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

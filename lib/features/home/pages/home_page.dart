@@ -1982,6 +1982,10 @@ class _HomePageState extends State<HomePage>
                 assistantId: assistantId,
                 conversationId: _controller.currentConversation?.id,
                 onClose: () => Navigator.of(ctx).maybePop(),
+                onStartGroupChat: (members) {
+                  Navigator.of(ctx).maybePop();
+                  unawaited(_controller.startGroupChat(members));
+                },
               ),
             );
           },

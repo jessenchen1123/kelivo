@@ -14,6 +14,7 @@ import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/models/assistant_regex.dart';
+import '../../../core/providers/assistant_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/assistant_regex.dart';
 import '../../../shared/widgets/ios_checkbox.dart';
@@ -2319,6 +2320,16 @@ class _MessageListViewState extends State<MessageListView> {
     RetryStatus? retryStatus,
   }) {
     final currentIdx = availableVersions.indexOf(selectedVersion);
+    // P5 群聊：作者角色消息以其本人身份渲染（头像/名字），绕过 1:1 显示偏好。
+    Assistant? authorCharacter;
+    if (message.role == 'assistant' && message.characterId != null) {
+      try {
+        authorCharacter = context.watch<AssistantProvider>().getById(
+          message.characterId!,
+        );
+      } catch (_) {}
+    }
+    final useAuthor = authorCharacter != null;
     return ChatMessageWidget(
       message: message,
       enableStreamingTextMotion: enableStreamingTextMotion,
@@ -2339,6 +2350,7 @@ class _MessageListViewState extends State<MessageListView> {
           : null,
       modelIcon:
           (!useAssistAvatar &&
+              !useAuthor &&
               message.role == 'assistant' &&
               message.providerId != null &&
               message.modelId != null)
@@ -2348,13 +2360,23 @@ class _MessageListViewState extends State<MessageListView> {
               size: 30,
             )
           : null,
-      showModelIcon: useAssistAvatar ? false : presentation.showModelIcon,
-      useAssistantAvatar: useAssistAvatar && message.role == 'assistant',
-      useAssistantName: useAssistName && message.role == 'assistant',
-      assistantName: (useAssistAvatar || useAssistName)
+      showModelIcon: (useAssistAvatar || useAuthor)
+          ? false
+          : presentation.showModelIcon,
+      useAssistantAvatar:
+          (useAssistAvatar || useAuthor) && message.role == 'assistant',
+      useAssistantName:
+          (useAssistName || useAuthor) && message.role == 'assistant',
+      assistantName: useAuthor
+          ? authorCharacter.name
+          : (useAssistAvatar || useAssistName)
           ? (assistant?.name ?? 'Assistant')
           : null,
-      assistantAvatar: useAssistAvatar ? (assistant?.avatar ?? '') : null,
+      assistantAvatar: useAuthor
+          ? (authorCharacter.avatar ?? '')
+          : useAssistAvatar
+          ? (assistant?.avatar ?? '')
+          : null,
       showUserAvatar: presentation.showUserAvatar,
       showTokenStats: presentation.showTokenStats,
       hideStreamingIndicator:

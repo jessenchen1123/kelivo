@@ -7,6 +7,7 @@ import '../../../core/models/chat_input_data.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/conversation.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/models/model_spec.dart';
 import '../../../core/models/reasoning_request.dart';
 import '../../../core/models/skills_binding.dart';
@@ -189,10 +190,13 @@ class MessageGenerationService {
     WorkspaceProvider? workspaceProvider;
     WorkspaceRuntimeProvider? runtimeProvider;
     ExternalMountsProvider? externalMounts;
+    // P5 群聊：群成员名字解析用的 provider 在首个 await 之前取好。
+    AssistantProvider? groupAssistantProvider;
     try {
       workspaceProvider = contextProvider.read<WorkspaceProvider>();
       runtimeProvider = contextProvider.read<WorkspaceRuntimeProvider>();
       externalMounts = contextProvider.read<ExternalMountsProvider?>();
+      groupAssistantProvider = contextProvider.read<AssistantProvider?>();
     } catch (_) {}
 
     final apiMessages = messageBuilderService.buildApiMessages(
@@ -200,6 +204,8 @@ class MessageGenerationService {
       versionSelections: versionSelections,
       currentConversation: currentConversation,
       includeToolMessages: includeToolMessages,
+      // P5 群聊：其他角色的历史发言加「[名字]:」前缀，当前角色的不加。
+      groupSpeakerCharacterId: assistant?.id,
     );
 
     if (assistant != null && assistant.regexRules.isNotEmpty) {
@@ -337,6 +343,23 @@ class MessageGenerationService {
       assistant,
       lang: settings.resolvedMemoryPromptLang,
     );
+    // P5 群聊规则与契约相邻注入：只在群聊会话里对成员生效。
+    if (promptConversation != null) {
+      final group = ConversationGroupChat.fromExtras(promptConversation.extras);
+      if (group.isGroup) {
+        final memberNames = <String>[
+          for (final id in group.members)
+            if (groupAssistantProvider?.getById(id) case final member?)
+              member.name,
+        ];
+        messageBuilderService.injectGroupChatRules(
+          apiMessages,
+          assistant,
+          memberNames: memberNames,
+          lang: settings.resolvedMemoryPromptLang,
+        );
+      }
+    }
 
     final mcpRouteSnapshot = generationController.captureMcpToolRoutes(
       assistant,
@@ -614,6 +637,7 @@ class MessageGenerationService {
     required Assistant? assistant,
     required String modelId,
     required String providerKey,
+    String? characterId,
   }) async {
     final userParts = await buildPersistedUserMessageParts(
       input,
@@ -629,6 +653,7 @@ class MessageGenerationService {
         conversationId: conversationId,
         modelId: modelId,
         providerKey: providerKey,
+        characterId: characterId,
       );
       return (
         userMessage: userMessage,
@@ -641,6 +666,7 @@ class MessageGenerationService {
       userParts: userParts,
       modelId: modelId,
       providerId: providerKey,
+      characterId: characterId,
     );
     return (
       userMessage: result.userMessage!,
@@ -656,6 +682,7 @@ class MessageGenerationService {
     required String groupId,
     required int version,
     required bool truncateFuture,
+    String? characterId,
   }) async {
     if (chatService.isTemporaryConversation(conversationId)) {
       final assistantMessage = await createAssistantPlaceholder(
@@ -664,6 +691,7 @@ class MessageGenerationService {
         providerKey: providerKey,
         groupId: groupId,
         version: version,
+        characterId: characterId,
       );
       return (assistantMessage: assistantMessage, runId: null);
     }
@@ -674,6 +702,7 @@ class MessageGenerationService {
       groupId: groupId,
       version: version,
       truncateFuture: truncateFuture,
+      characterId: characterId,
     );
     return (assistantMessage: result.assistantMessage, runId: result.run.id);
   }
@@ -685,6 +714,7 @@ class MessageGenerationService {
     required String providerKey,
     required String anchorGroupId,
     required bool truncateFuture,
+    String? characterId,
   }) async {
     if (chatService.isTemporaryConversation(conversationId)) {
       final assistantMessage = await createAssistantPlaceholder(
@@ -692,6 +722,7 @@ class MessageGenerationService {
         modelId: modelId,
         providerKey: providerKey,
         temporaryAfterGroupId: anchorGroupId,
+        characterId: characterId,
       );
       return (assistantMessage: assistantMessage, runId: null);
     }
@@ -701,6 +732,7 @@ class MessageGenerationService {
       providerId: providerKey,
       anchorGroupId: anchorGroupId,
       truncateFuture: truncateFuture,
+      characterId: characterId,
     );
     return (assistantMessage: result.assistantMessage, runId: result.run.id);
   }
@@ -765,6 +797,7 @@ class MessageGenerationService {
     String? groupId,
     int version = 0,
     String? temporaryAfterGroupId,
+    String? characterId,
   }) async {
     return chatService.addMessage(
       conversationId: conversationId,
@@ -777,6 +810,7 @@ class MessageGenerationService {
       version: version,
       selectVersion: groupId != null,
       temporaryAfterGroupId: temporaryAfterGroupId,
+      characterId: characterId,
     );
   }
 

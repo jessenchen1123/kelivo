@@ -13,6 +13,7 @@ import '../../../core/models/chat_input_data.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/conversation.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/models/world_book.dart';
 import '../../../core/models/conversation_prompt_settings.dart';
 import '../../../core/services/world_book_activation.dart';
@@ -20,6 +21,7 @@ import '../../../core/providers/memory_provider.dart';
 import '../../../core/providers/environment_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/providers/assistant_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/chat/document_text_extractor.dart';
 import '../../../utils/mcp_structured_image.dart';
@@ -319,7 +321,27 @@ class MessageBuilderService {
     required Map<String, int> versionSelections,
     required Conversation? currentConversation,
     bool includeToolMessages = false,
+    String? groupSpeakerCharacterId,
   }) {
+    // P5 群聊：解析成员名字，给其他角色的历史发言加「[名字]:」前缀。
+    Map<String, String>? groupMemberNames;
+    if (groupSpeakerCharacterId != null && currentConversation != null) {
+      final group = ConversationGroupChat.fromExtras(
+        currentConversation.extras,
+      );
+      if (group.isGroup) {
+        AssistantProvider? assistants;
+        try {
+          assistants = contextProvider.read<AssistantProvider>();
+        } catch (_) {}
+        if (assistants != null) {
+          groupMemberNames = <String, String>{
+            for (final id in group.members)
+              if (assistants.getById(id) case final member?) id: member.name,
+          };
+        }
+      }
+    }
     final tIndex = currentConversation?.truncateIndex ?? -1;
     final List<ChatMessage> sourceAll =
         (tIndex >= 0 && tIndex <= messages.length)
@@ -439,7 +461,17 @@ class MessageBuilderService {
         }
       }
 
-      final content = m.content;
+      var content = m.content;
+      // P5 群聊：当前说话角色之外的其他角色发言加名字前缀，模型得以区分说话人。
+      if (groupMemberNames != null &&
+          m.role == 'assistant' &&
+          m.characterId != null &&
+          m.characterId != groupSpeakerCharacterId) {
+        final authorName = groupMemberNames[m.characterId];
+        if (authorName != null && content.isNotEmpty) {
+          content = '[$authorName]: $content';
+        }
+      }
       final mediaRefs = mediaRefsFromParts(m);
       // Pure-attachment turns have empty text content but still must be sent.
       // Document FileParts are omitted from mediaRefs (they travel via
@@ -2481,6 +2513,30 @@ class MessageBuilderService {
     apiMessages.insert(insertAt.clamp(0, apiMessages.length), message);
   }
 
+  /// Inject group-chat rules (P5) right after the roleplay contract so both
+  /// share the bottom-attention position. Same role=user + `<system>`
+  /// convention; only meaningful when [speaker] is part of a real group.
+  void injectGroupChatRules(
+    List<Map<String, dynamic>> apiMessages,
+    Assistant? speaker, {
+    required List<String> memberNames,
+    MemoryPromptLang lang = MemoryPromptLang.zh,
+  }) {
+    final rules = RpContractBuilder.buildGroupRules(
+      speaker: speaker,
+      memberNames: memberNames,
+      lang: lang,
+    );
+    if (rules.isEmpty) return;
+    final message = <String, dynamic>{'role': 'user', 'content': rules};
+    ContextSegmentTags.replaceWithSingle(
+      message,
+      source: ContextSource.roleplayContract,
+      length: rules.length,
+    );
+    apiMessages.add(message);
+  }
+
   /// Helper to append content to the system message (or create one if missing).
   void _appendToSystemMessage(
     List<Map<String, dynamic>> apiMessages,
@@ -2605,9 +2661,7 @@ class MessageBuilderService {
   ///
   /// Attachments are not counted; callers should keep the trigger threshold
   /// far enough below the window that uncounted media/tool budgets still fit.
-  static int estimateApiMessagesTokens(
-    List<Map<String, dynamic>> apiMessages,
-  ) {
+  static int estimateApiMessagesTokens(List<Map<String, dynamic>> apiMessages) {
     var total = 0;
     for (final message in apiMessages) {
       final content = message['content'];

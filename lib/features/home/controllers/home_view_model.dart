@@ -8,6 +8,7 @@ import '../../../core/models/reasoning_request.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/compress_context_options.dart';
 import '../../../core/models/conversation.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/api/chat_api_service.dart';
@@ -1083,6 +1084,54 @@ class HomeViewModel extends ChangeNotifier {
     } catch (_) {}
 
     onScrollToBottom?.call();
+  }
+
+  /// P5 群聊：建立带群聊 extras 的草稿会话并切换过去。
+  /// 返回是否成功创建。
+  Future<bool> createGroupConversation(List<String> memberIds) async {
+    if (memberIds.length < ConversationGroupChat.minMembers) return false;
+    await _chatActions.flushConversationProgress(currentConversation);
+    if (!_contextProvider.mounted) return false;
+
+    resetFileProcessingIndicator();
+
+    final ap = _contextProvider.read<AssistantProvider>();
+    try {
+      await ap.loaded;
+    } catch (e) {
+      onError?.call(e.toString());
+      return false;
+    }
+    if (!_contextProvider.mounted) return false;
+
+    final names = <String>[
+      for (final id in memberIds)
+        if (ap.getById(id)?.name.trim() is String) ap.getById(id)!.name.trim(),
+    ];
+    final l10n = AppLocalizations.of(_contextProvider);
+    final title =
+        '${l10n?.groupChatTitlePrefix ?? 'Group: '}${names.join('、')}';
+    final conversation = await _chatService.createDraftConversation(
+      title: title,
+      assistantId: memberIds.first,
+    );
+    await _chatService.updateConversationExtras(
+      conversation.id,
+      (extras) => const ConversationGroupChat(
+        enabled: true,
+      ).copyWith(members: memberIds).applyTo(extras),
+    );
+
+    _chatController.setDraftConversation(
+      _chatService.getConversation(conversation.id) ?? conversation,
+    );
+    _syncContextUsageConversation(conversation.id);
+    _streamController.clearAllState(
+      keepMessageIds: _chatActions.activeStreamingMessageIds,
+    );
+    notifyListeners();
+    onScrollToBottom?.call();
+    return true;
   }
 
   Future<void> toggleTemporaryConversation() async {

@@ -2934,6 +2934,7 @@ class ChatService extends ChangeNotifier {
     int? version,
     bool selectVersion = false,
     String? temporaryAfterGroupId,
+    String? characterId,
   }) async {
     if (!_initialized) await init();
 
@@ -2971,6 +2972,7 @@ class ChatService extends ChangeNotifier {
       reasoningFinishedAt: reasoningFinishedAt,
       groupId: groupId,
       version: version,
+      characterId: characterId,
     );
 
     if (_discardedTemporaryConversationIds.contains(conversationId)) {
@@ -3050,6 +3052,7 @@ class ChatService extends ChangeNotifier {
     required List<MessagePart> userParts,
     required String modelId,
     required String providerId,
+    String? characterId,
   }) async {
     if (!_initialized) await init();
     if (isTemporaryConversation(conversationId)) {
@@ -3074,6 +3077,7 @@ class ChatService extends ChangeNotifier {
       modelId: modelId,
       providerId: providerId,
       isStreaming: true,
+      characterId: characterId,
     );
     final result = await _repo.beginSendGeneration(
       conversation: conversation,
@@ -3092,6 +3096,7 @@ class ChatService extends ChangeNotifier {
     required String groupId,
     required int version,
     required bool truncateFuture,
+    String? characterId,
   }) async {
     if (!_initialized) await init();
     if (isTemporaryConversation(conversationId)) {
@@ -3109,6 +3114,7 @@ class ChatService extends ChangeNotifier {
       isStreaming: true,
       groupId: groupId,
       version: version,
+      characterId: characterId,
     );
     final result = await _repo.beginRegeneration(
       conversation: conversation,
@@ -3132,6 +3138,7 @@ class ChatService extends ChangeNotifier {
     required String providerId,
     required String anchorGroupId,
     required bool truncateFuture,
+    String? characterId,
   }) async {
     if (!_initialized) await init();
     if (isTemporaryConversation(conversationId)) {
@@ -3147,6 +3154,7 @@ class ChatService extends ChangeNotifier {
       modelId: modelId,
       providerId: providerId,
       isStreaming: true,
+      characterId: characterId,
     );
     final result = await _repo.beginAssistantGeneration(
       conversation: conversation,

@@ -25,6 +25,7 @@ import '../../model/widgets/ocr_prompt_sheet.dart';
 import '../../workspace/pages/skills_page.dart';
 import '../../workspace/widgets/skills/conversation_skills_sheet.dart';
 import '../utils/ensure_conversation.dart';
+import 'group_chat_member_picker.dart';
 import 'package:Kelivo/theme/app_semantic_colors.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../theme/app_font_weights.dart';
@@ -45,6 +46,7 @@ class BottomToolsSheet extends StatelessWidget {
     this.assistantId,
     this.conversationId,
     this.onClose,
+    this.onStartGroupChat,
   });
 
   final VoidCallback? onCamera;
@@ -55,6 +57,9 @@ class BottomToolsSheet extends StatelessWidget {
   final String? assistantId;
   final String? conversationId;
   final VoidCallback? onClose;
+
+  /// P5 群聊：成员多选完成后回调（建群逻辑在持有 ChatController 的宿主里）。
+  final ValueChanged<List<String>>? onStartGroupChat;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +155,7 @@ class BottomToolsSheet extends StatelessWidget {
                       assistantId: assistantId,
                       conversationId: conversationId,
                       onClose: onClose,
+                      onStartGroupChat: onStartGroupChat,
                     ),
                   ],
                 ),
@@ -212,12 +218,16 @@ class _LearningAndClearSection extends StatefulWidget {
     this.assistantId,
     this.conversationId,
     this.onClose,
+    this.onStartGroupChat,
   });
   final VoidCallback? onClear;
   final String? clearLabel;
   final String? assistantId;
   final String? conversationId;
   final VoidCallback? onClose;
+
+  /// P5 群聊：成员多选完成后回调（建群逻辑在持有 ChatController 的宿主里）。
+  final ValueChanged<List<String>>? onStartGroupChat;
 
   @override
   State<_LearningAndClearSection> createState() =>
@@ -273,6 +283,15 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
       conversationId: id,
       assistant: _assistant(),
     );
+  }
+
+  /// P5 群聊：多选角色后交给宿主建群。
+  Future<void> _startGroupChat(BuildContext context) async {
+    final members = await showGroupChatMemberPicker(context);
+    if (members == null || members.length < 2) return;
+    if (!context.mounted) return;
+    Navigator.of(context).maybePop();
+    widget.onStartGroupChat?.call(members);
   }
 
   @override
@@ -344,6 +363,17 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
                 MaterialPageRoute(builder: (_) => const CharacterLibraryPage()),
               );
             });
+          },
+          trailing: chevron,
+        ),
+        const SizedBox(height: 8),
+        ToolsSheetRow(
+          icon: Lucide.MessagesSquare,
+          label: l10n.groupChatRowLabel,
+          subtitle: l10n.groupChatRowSubtitle,
+          onTap: () {
+            Haptics.light();
+            _startGroupChat(context);
           },
           trailing: chevron,
         ),

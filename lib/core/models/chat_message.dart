@@ -98,6 +98,11 @@ class ChatMessage extends HiveObject {
   /// Latest API request only; the scalar token fields contain the whole turn.
   final TokenUsage? finishUsage;
 
+  /// Authoring assistant id for group-chat replies (P5). Null = the
+  /// conversation's single assistant or the user. Persisted in the
+  /// message_rows.sender_id column; the Hive legacy adapter ignores it.
+  final String? characterId;
+
   TokenUsage get tokenUsage => TokenUsage(
     promptTokens: promptTokens,
     completionTokens: completionTokens,
@@ -133,6 +138,7 @@ class ChatMessage extends HiveObject {
     this.reasoningTokens,
     this.cacheWriteTokens,
     this.finishUsage,
+    this.characterId,
   }) : parts = List<MessagePart>.unmodifiable(
          parts ?? <MessagePart>[TextPart(content ?? '')],
        ),
@@ -301,6 +307,7 @@ class ChatMessage extends HiveObject {
     int? reasoningTokens,
     int? cacheWriteTokens,
     TokenUsage? finishUsage,
+    String? characterId,
   }) {
     final List<MessagePart>? nextParts;
     if (parts != null) {
@@ -336,6 +343,7 @@ class ChatMessage extends HiveObject {
       reasoningTokens: reasoningTokens ?? this.reasoningTokens,
       cacheWriteTokens: cacheWriteTokens ?? this.cacheWriteTokens,
       finishUsage: finishUsage ?? this.finishUsage,
+      characterId: characterId ?? this.characterId,
     );
   }
 
@@ -362,6 +370,7 @@ class ChatMessage extends HiveObject {
       'reasoningSegmentsJson': reasoningSegmentsJson,
       'groupId': groupId,
       'version': version,
+      'characterId': characterId,
       'promptTokens': promptTokens,
       'completionTokens': completionTokens,
       'cachedTokens': cachedTokens,
@@ -419,6 +428,7 @@ class ChatMessage extends HiveObject {
       reasoningSegmentsJson: json['reasoningSegmentsJson'] as String?,
       groupId: json['groupId'] as String?,
       version: (json['version'] as int?) ?? 0,
+      characterId: json['characterId'] as String?,
       promptTokens: json['promptTokens'] as int?,
       completionTokens: json['completionTokens'] as int?,
       cachedTokens: json['cachedTokens'] as int?,

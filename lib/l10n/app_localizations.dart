@@ -238,6 +238,42 @@ abstract class AppLocalizations {
   /// **'Hide the top bar for full-bleed chat'**
   String get immersiveModeRowSubtitle;
 
+  /// No description provided for @groupChatRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Character group chat'**
+  String get groupChatRowLabel;
+
+  /// No description provided for @groupChatRowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick 2+ characters — they take turns and reply in one conversation'**
+  String get groupChatRowSubtitle;
+
+  /// No description provided for @groupChatPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select group members'**
+  String get groupChatPickerTitle;
+
+  /// No description provided for @groupChatPickerStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start group chat'**
+  String get groupChatPickerStart;
+
+  /// No description provided for @groupChatPickerMinHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least 2 characters'**
+  String get groupChatPickerMinHint;
+
+  /// No description provided for @groupChatTitlePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Group: '**
+  String get groupChatTitlePrefix;
+
   /// No description provided for @characterLibrarySearchHint.
   ///
   /// In en, this message translates to:

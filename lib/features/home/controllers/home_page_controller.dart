@@ -12,6 +12,7 @@ import '../../../core/models/chat_input_data.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/conversation.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/models/reasoning_request.dart';
 import '../../../core/models/workspace_binding.dart';
 import '../../../core/providers/workspace_provider.dart';
@@ -1317,6 +1318,36 @@ class HomePageController extends ChangeNotifier {
     _scrollToBottomSoon(animate: false);
   }
 
+  /// P5 群聊：按成员顺序建立群聊草稿会话（首位成员为主持人）。
+  Future<void> startGroupChat(List<String> memberIds) async {
+    if (memberIds.length < ConversationGroupChat.minMembers) return;
+    _switchSerial++;
+    _warmupSerial++;
+    _selectionEpoch++;
+    try {
+      await _viewModel.flushCurrentConversationProgress();
+    } catch (_) {}
+    _exitUserMessageEdit(clearDraft: true);
+    _translations.clear();
+    if (!isDesktopPlatform) {
+      try {
+        await _convoFadeController.reverse();
+      } catch (_) {}
+    }
+    final created = await _viewModel.createGroupConversation(memberIds);
+    if (created && currentConversation?.id != null) {
+      _clearSelectionState();
+    }
+    notifyListeners();
+    _scrollToBottomSoon(animate: false);
+    if (!isDesktopPlatform) {
+      try {
+        await WidgetsBinding.instance.endOfFrame;
+        await _convoFadeController.forward();
+      } catch (_) {}
+    }
+  }
+
   /// Clears selection chrome without notifying.
   ///
   /// Bumps the selection epoch so in-flight select-all / toggle / invert
@@ -1892,16 +1923,13 @@ class HomePageController extends ChangeNotifier {
     // generation resources while the independent speech session keeps running.
     final chatService = _context.read<ChatService>();
     final conversation = chatService.getConversation(message.conversationId);
-    final assistant = conversation?.assistantId == null
+    // Group chat (P5): a message authored by a specific character speaks with
+    // that character's voice, not the conversation host's.
+    final assistantId = message.characterId ?? conversation?.assistantId;
+    final assistant = assistantId == null
         ? null
-        : _context
-              .read<AssistantProvider>()
-              .getById(conversation!.assistantId!);
-    await tts.speakForAssistant(
-      assistant,
-      text,
-      waitForCompletion: !autoPlay,
-    );
+        : _context.read<AssistantProvider>().getById(assistantId);
+    await tts.speakForAssistant(assistant, text, waitForCompletion: !autoPlay);
   }
 
   void shareMessage(int messageIndex, List<ChatMessage> messageList) {

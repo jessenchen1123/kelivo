@@ -82,6 +82,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get immersiveModeRowSubtitle => '隐藏顶栏，全屏沉浸聊天';
 
   @override
+  String get groupChatRowLabel => '角色群聊';
+
+  @override
+  String get groupChatRowSubtitle => '选 2 个以上角色，他们在同一会话里轮流发言';
+
+  @override
+  String get groupChatPickerTitle => '选择群聊成员';
+
+  @override
+  String get groupChatPickerStart => '开始群聊';
+
+  @override
+  String get groupChatPickerMinHint => '至少选择 2 个角色';
+
+  @override
+  String get groupChatTitlePrefix => '群聊：';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -12394,6 +12412,24 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get immersiveModeRowSubtitle => '隐藏顶栏，全屏沉浸聊天';
 
   @override
+  String get groupChatRowLabel => '角色群聊';
+
+  @override
+  String get groupChatRowSubtitle => '选 2 个以上角色，他们在同一会话里轮流发言';
+
+  @override
+  String get groupChatPickerTitle => '选择群聊成员';
+
+  @override
+  String get groupChatPickerStart => '开始群聊';
+
+  @override
+  String get groupChatPickerMinHint => '至少选择 2 个角色';
+
+  @override
+  String get groupChatTitlePrefix => '群聊：';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -24630,6 +24666,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get immersiveModeRowSubtitle => '隱藏頂欄，全螢幕沉浸聊天';
+
+  @override
+  String get groupChatRowLabel => '角色群聊';
+
+  @override
+  String get groupChatRowSubtitle => '選 2 個以上角色，他們在同一會話裡輪流發言';
+
+  @override
+  String get groupChatPickerTitle => '選擇群聊成員';
+
+  @override
+  String get groupChatPickerStart => '開始群聊';
+
+  @override
+  String get groupChatPickerMinHint => '至少選擇 2 個角色';
+
+  @override
+  String get groupChatTitlePrefix => '群聊：';
 
   @override
   String get characterLibrarySearchHint => '搜尋角色…';
