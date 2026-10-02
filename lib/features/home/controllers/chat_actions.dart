@@ -111,7 +111,9 @@ class _GroupRoundState {
     required this.scheduled,
     required this.scheduledNotify,
     required this.scheduledPreview,
+    required this.allMemberIds,
     this.memberIds = const <String>[],
+    this.endlessAllowed = true,
   });
 
   final ChatInputData input;
@@ -120,7 +122,18 @@ class _GroupRoundState {
   /// director: unused; the director is consulted after every reply instead.
   final List<String> memberIds;
 
+  /// Every resolvable member in roster order. Rotation refills [memberIds]
+  /// from this in endless mode; director mode uses it for the round cap.
+  final List<String> allMemberIds;
+
   final _GroupTurnStrategy strategy;
+
+  /// 本轮是否可以进入无限流。定时任务（无人看守）永远为 false。
+  final bool endlessAllowed;
+
+  /// 本轮此刻是否处于无限流。每次链式决策前用会话里的实时开关刷新，
+  /// 所以演出中拨开关立刻生效（关掉 → 本轮马上收尾、把话语权还给用户）。
+  bool infinite = false;
 
   /// Character id of the most recent speaker this round.
   String? lastSpeakerId;
@@ -130,6 +143,11 @@ class _GroupRoundState {
 
   /// Generated replies so far this round (guards runaway rounds).
   int repliesThisRound = 0;
+
+  /// Members skipped in a row because they have no usable model. Guards the
+  /// endless-mode rotation refill against spinning forever on a model-less
+  /// roster.
+  int consecutiveSkippedTurns = 0;
 
   /// Per-character reply count this round, keyed by assistant id.
   final Map<String, int> speakCounts = <String, int>{};
@@ -435,6 +453,16 @@ class ChatActions {
   /// 该会话此刻是否在等导演裁决。
   bool isConsultingGroupDirector(String conversationId) =>
       _directorConsultations.contains(conversationId);
+
+  /// P5 无限流：该会话此刻是否正处于无限流演出中。
+  ///
+  /// 聊天输入栏据此把「停止」键在有输入时变成「发送」（发送即插话）。
+  /// 实时读会话配置，开关一拨立刻反映到输入栏。
+  bool isEndlessGroupRound(String conversationId) {
+    final round = _groupRounds[conversationId];
+    if (round == null) return false;
+    return _resolveEndless(conversationId, round);
+  }
 
   void _beginDirectorConsultation(String conversationId) {
     if (_directorConsultations.add(conversationId)) {
@@ -1284,6 +1312,9 @@ class ChatActions {
           scheduled: scheduled,
           scheduledNotify: scheduledNotify,
           scheduledPreview: scheduledPreview,
+          // 定时任务永远不进入无限流：无人看守时不能让模型无限刷下去。
+          endlessAllowed: !scheduled,
+          allMemberIds: resolvableMembers,
           memberIds: useDirector
               ? const <String>[]
               : <String>[
@@ -1293,6 +1324,7 @@ class ChatActions {
                 ],
         );
         _groupRounds[conversation.id] = groupRound;
+        groupRound.infinite = _resolveEndless(conversation.id, groupRound);
         if (useDirector) {
           // 导演模式：首发也由导演决定（含用户消息内容）。
           final verdict = await _consultGroupDirector(
@@ -2919,12 +2951,34 @@ class ChatActions {
       return false;
     }
     final assistantProvider = contextProvider.read<AssistantProvider>();
+    // 无限流的开关是实时的：每次决策前重读会话配置，演出中途拨开关立刻生效。
+    round.infinite = _resolveEndless(conversationId, round);
+    // 无限流插话：用户在演出中发送了消息 → 主动还权收尾，让加载态关闭；
+    // 排队中的那条消息会由 HomeViewModel 的 drain 逻辑作为新一次发送启动。
+    if (round.infinite && viewModel.hasQueuedInput(conversationId)) {
+      FlutterLogger.log(
+        '[ChatActions] endless group chat yielded to a queued user message',
+        tag: 'ChatActions',
+      );
+      _groupRounds.remove(conversationId);
+      return false;
+    }
     final members = <Assistant>[
-      for (final id in round.memberIds)
+      for (final id in round.allMemberIds)
         if (assistantProvider.getById(id) case final Assistant found) found,
     ];
     // 导演模式轮次上限：本轮已生成的回复数耗尽即收尾（计数在生成启动时更新）。
-    if (round.strategy == _GroupTurnStrategy.director) {
+    // 无限流跳过这个上限，只保留一个极高的跑飞护栏（两种调度策略都适用）。
+    if (round.infinite) {
+      if (round.repliesThisRound >= _endlessRoundSafetyCeiling) {
+        FlutterLogger.log(
+          '[ChatActions] endless group chat hit the safety ceiling, ending round',
+          tag: 'ChatActions',
+        );
+        _groupRounds.remove(conversationId);
+        return false;
+      }
+    } else if (round.strategy == _GroupTurnStrategy.director) {
       if (round.repliesThisRound >=
           GroupDirector.maxRepliesPerRound(members.length)) {
         FlutterLogger.log(
@@ -2943,6 +2997,15 @@ class ChatActions {
         if (member != null) break;
         // 成员已被删除：跳过，继续下一位。
       }
+      if (member == null && round.infinite) {
+        // 无限流：队列走空就按名单顺序循环补位，从 lastSpeakerId 的下一位开始。
+        _refillGroupRotationQueue(round);
+        while (round.memberIds.isNotEmpty) {
+          final candidateId = round.memberIds.removeAt(0);
+          member = assistantProvider.getById(candidateId);
+          if (member != null) break;
+        }
+      }
       if (member == null) {
         _groupRounds.remove(conversationId);
         return false;
@@ -2960,19 +3023,38 @@ class ChatActions {
       final pickId = verdict.nextCharacterId;
       member = pickId == null ? null : assistantProvider.getById(pickId);
       if (member == null) {
-        // 导演说收尾/调用失败/返回无效名字：本轮结束。
-        _groupRounds.remove(conversationId);
-        return false;
+        // 导演说收尾/调用失败/返回无效名字：无限流下不能停，按名单顺序顶上一位。
+        if (!round.infinite) {
+          _groupRounds.remove(conversationId);
+          return false;
+        }
+        member = _nextGroupSpeakerFromRoster(round, assistantProvider);
+        if (member == null) {
+          _groupRounds.remove(conversationId);
+          return false;
+        }
       }
-      // 连续发言护栏：同一人连说超过上限则收尾，避免导演卡在一个人身上。
+      // 连续发言护栏：同一人连说超过上限则该换人。
       if (member.id == round.lastSpeakerId &&
           round.consecutiveCount >= GroupDirector.maxConsecutiveSameSpeaker) {
-        FlutterLogger.log(
-          '[ChatActions] director consecutive cap reached for ${member.name}',
-          tag: 'ChatActions',
+        if (!round.infinite) {
+          FlutterLogger.log(
+            '[ChatActions] director consecutive cap reached for ${member.name}',
+            tag: 'ChatActions',
+          );
+          _groupRounds.remove(conversationId);
+          return false;
+        }
+        // 无限流：换个还没连说过头的人继续，演出不中断。
+        final replacement = _nextGroupSpeakerFromRoster(
+          round,
+          assistantProvider,
         );
-        _groupRounds.remove(conversationId);
-        return false;
+        if (replacement == null || replacement.id == member.id) {
+          _groupRounds.remove(conversationId);
+          return false;
+        }
+        member = replacement;
       }
     }
     try {
@@ -2991,6 +3073,49 @@ class ChatActions {
       _groupRounds.remove(conversationId);
       return false;
     }
+  }
+
+  /// 无限流的跑飞护栏：只有整场演出长到这个量级才强制收尾，正常「看戏」
+  /// 远达不到。防止无人看守时把额度烧光。
+  static const int _endlessRoundSafetyCeiling = 100;
+
+  /// 本轮此刻是否处于无限流：开关实时读会话配置，定时任务永不无限流。
+  bool _resolveEndless(String conversationId, _GroupRoundState round) {
+    if (!round.endlessAllowed) return false;
+    return ConversationGroupChat.fromExtras(
+      chatService.getConversation(conversationId)?.extras ?? const {},
+    ).infiniteEnabled;
+  }
+
+  /// 无限流轮转补位：把 [allMemberIds] 按 lastSpeakerId 的下一位起整轮填回队列。
+  void _refillGroupRotationQueue(_GroupRoundState round) {
+    final roster = round.allMemberIds;
+    if (roster.isEmpty) return;
+    final lastIndex = round.lastSpeakerId == null
+        ? -1
+        : roster.indexOf(round.lastSpeakerId!);
+    for (var i = 0; i < roster.length; i++) {
+      round.memberIds.add(roster[(lastIndex + 1 + i) % roster.length]);
+    }
+  }
+
+  /// 名单里 [lastSpeakerId] 的下一位可解析成员（无限流补位用）。
+  Assistant? _nextGroupSpeakerFromRoster(
+    _GroupRoundState round,
+    AssistantProvider assistantProvider,
+  ) {
+    final roster = round.allMemberIds;
+    if (roster.isEmpty) return null;
+    final lastIndex = round.lastSpeakerId == null
+        ? -1
+        : roster.indexOf(round.lastSpeakerId!);
+    for (var i = 0; i < roster.length; i++) {
+      final candidate = assistantProvider.getById(
+        roster[(lastIndex + 1 + i) % roster.length],
+      );
+      if (candidate != null) return candidate;
+    }
+    return null;
   }
 
   /// P5 导演：读取最近对话并请求调度决策。
@@ -3088,6 +3213,7 @@ class ChatActions {
       useZhPrompts: settings.resolvedMemoryPromptLang == MemoryPromptLang.zh,
       speakCountsByName: speakCountsByName,
       memberNamesById: memberNamesById,
+      infinite: round.infinite,
     );
   }
 
@@ -3115,6 +3241,12 @@ class ChatActions {
         '[ChatActions] group member ${member.name} has no model, skipped',
         tag: 'ChatActions',
       );
+      // 无限流下轮转队列会循环补位，全员都没模型时会空转；连跳一整轮就收尾。
+      round.consecutiveSkippedTurns++;
+      if (round.consecutiveSkippedTurns > round.allMemberIds.length) {
+        _groupRounds.remove(conversationId);
+        return;
+      }
       await _startNextGroupMemberTurn(
         conversationId,
         anchorGroupId: anchorGroupId,
@@ -3135,6 +3267,7 @@ class ChatActions {
     final generationRunId = begin.runId;
     _registerGenerationRun(assistantMessage.id, generationRunId);
     // 记录本轮发言人：导演决策与护栏计数依赖它（单一计数点）。
+    round.consecutiveSkippedTurns = 0;
     round.consecutiveCount = member.id == round.lastSpeakerId
         ? round.consecutiveCount + 1
         : 1;

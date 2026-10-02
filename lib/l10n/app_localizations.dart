@@ -292,6 +292,18 @@ abstract class AppLocalizations {
   /// **'Director is deciding…'**
   String get groupChatDirectorThinking;
 
+  /// No description provided for @groupChatInfiniteToggleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Endless show'**
+  String get groupChatInfiniteToggleLabel;
+
+  /// No description provided for @groupChatInfiniteToggleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters keep the scene going on their own — send a message to step in'**
+  String get groupChatInfiniteToggleSubtitle;
+
   /// No description provided for @defaultModelPageDirectorModelTitle.
   ///
   /// In en, this message translates to:

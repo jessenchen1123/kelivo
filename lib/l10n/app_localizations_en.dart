@@ -119,6 +119,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupChatDirectorThinking => 'Director is deciding…';
 
   @override
+  String get groupChatInfiniteToggleLabel => 'Endless show';
+
+  @override
+  String get groupChatInfiniteToggleSubtitle =>
+      'Characters keep the scene going on their own — send a message to step in';
+
+  @override
   String get defaultModelPageDirectorModelTitle => 'Director model';
 
   @override

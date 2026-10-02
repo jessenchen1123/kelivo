@@ -351,6 +351,9 @@ class HomePageController extends ChangeNotifier {
   bool get isCurrentConversationDirectorThinking =>
       _viewModel.isCurrentConversationDirectorThinking;
 
+  bool get isCurrentConversationEndlessGroupRound =>
+      _viewModel.isCurrentConversationEndlessGroupRound;
+
   QueuedChatInput? get currentQueuedInput => _viewModel.currentQueuedInput;
 
   ValueNotifier<String?> get processingFilesMessageId =>

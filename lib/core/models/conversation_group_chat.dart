@@ -11,6 +11,7 @@ class ConversationGroupChat {
   static const String keyMembers = 'groupChat.members';
   static const String keyTurnIndex = 'groupChat.turnIndex';
   static const String keyDirector = 'groupChat.director';
+  static const String keyInfinite = 'groupChat.infinite';
 
   /// Minimum participants for an actual group (a single member is just a
   /// normal 1:1 conversation and must not enable group mode).
@@ -24,11 +25,16 @@ class ConversationGroupChat {
   /// 允许同一人连续发言与两人对谈；关闭时为纯轮转。
   final bool directorEnabled;
 
+  /// P5 无限流（看戏模式）：群聊轮次永不交还用户，角色们自己一直演下去，
+  /// 用户插话（发送消息）才结束本轮。定时任务不触发无限流。
+  final bool infiniteEnabled;
+
   const ConversationGroupChat({
     this.enabled = false,
     this.members = const <String>[],
     this.turnIndex = 0,
     this.directorEnabled = false,
+    this.infiniteEnabled = false,
   });
 
   bool get isGroup => enabled && members.length >= minMembers;
@@ -44,6 +50,7 @@ class ConversationGroupChat {
       members: members,
       turnIndex: (extras[keyTurnIndex] as num?)?.toInt() ?? 0,
       directorEnabled: extras[keyDirector] as bool? ?? false,
+      infiniteEnabled: extras[keyInfinite] as bool? ?? false,
     );
   }
 
@@ -56,12 +63,14 @@ class ConversationGroupChat {
       next.remove(keyMembers);
       next.remove(keyTurnIndex);
       next.remove(keyDirector);
+      next.remove(keyInfinite);
       return next;
     }
     next[keyEnabled] = enabled;
     next[keyMembers] = members;
     next[keyTurnIndex] = turnIndex;
     next[keyDirector] = directorEnabled;
+    next[keyInfinite] = infiniteEnabled;
     return next;
   }
 
@@ -70,12 +79,14 @@ class ConversationGroupChat {
     List<String>? members,
     int? turnIndex,
     bool? directorEnabled,
+    bool? infiniteEnabled,
   }) {
     return ConversationGroupChat(
       enabled: enabled ?? this.enabled,
       members: members ?? this.members,
       turnIndex: turnIndex ?? this.turnIndex,
       directorEnabled: directorEnabled ?? this.directorEnabled,
+      infiniteEnabled: infiniteEnabled ?? this.infiniteEnabled,
     );
   }
 }

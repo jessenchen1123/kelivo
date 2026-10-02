@@ -55,6 +55,7 @@ class ChatInputSection extends StatelessWidget {
     required this.mediaController,
     required this.isTablet,
     required this.isLoading,
+    this.allowSendWhileLoading = false,
     required this.isToolModel,
     required this.isReasoningModel,
     required this.isReasoningEnabled,
@@ -97,6 +98,10 @@ class ChatInputSection extends StatelessWidget {
   final ChatInputBarController mediaController;
   final bool isTablet;
   final bool isLoading;
+
+  /// P5 无限流：演出进行中也允许发送（发送即插话）。此时有文字时发送键
+  /// 按「发送」处理，空输入时仍是「停止」。
+  final bool allowSendWhileLoading;
 
   // Model capability checkers
   final IsToolModelCallback isToolModel;
@@ -231,6 +236,7 @@ class ChatInputSection extends StatelessWidget {
       onOpenSearch: onOpenSearch,
       onSend: onSend,
       loading: isLoading,
+      allowSendWhileLoading: allowSendWhileLoading,
       sendButtonTooltip: sendButtonTooltip,
       hasQueuedInput: hasQueuedInput,
       queuedPreviewText: queuedPreviewText,

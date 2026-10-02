@@ -109,6 +109,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupChatDirectorThinking => '导演正在思考…';
 
   @override
+  String get groupChatInfiniteToggleLabel => '无限流（看戏模式）';
+
+  @override
+  String get groupChatInfiniteToggleSubtitle => '角色们自己一直演下去，你发消息才停下';
+
+  @override
   String get defaultModelPageDirectorModelTitle => '导演模型';
 
   @override
@@ -12454,6 +12460,12 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get groupChatDirectorThinking => '导演正在思考…';
 
   @override
+  String get groupChatInfiniteToggleLabel => '无限流（看戏模式）';
+
+  @override
+  String get groupChatInfiniteToggleSubtitle => '角色们自己一直演下去，你发消息才停下';
+
+  @override
   String get defaultModelPageDirectorModelTitle => '导演模型';
 
   @override
@@ -24723,6 +24735,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupChatDirectorThinking => '導演正在思考…';
+
+  @override
+  String get groupChatInfiniteToggleLabel => '無限流（看戲模式）';
+
+  @override
+  String get groupChatInfiniteToggleSubtitle => '角色們自己一直演下去，你發訊息才停下';
 
   @override
   String get defaultModelPageDirectorModelTitle => '導演模型';

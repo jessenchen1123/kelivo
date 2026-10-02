@@ -98,6 +98,7 @@ class Lucide {
   static const IconData ClipboardPen = lucide.LucideIcons.clipboardPen;
   static const IconData Sparkles = lucide.LucideIcons.sparkles;
   static const IconData Drama = lucide.LucideIcons.drama;
+  static const IconData Infinity = lucide.LucideIcons.infinity;
   static const IconData WandSparkles = lucide.LucideIcons.wandSparkles;
   static const IconData Phone = lucide.LucideIcons.phone;
   static const IconData Code = lucide.LucideIcons.code;

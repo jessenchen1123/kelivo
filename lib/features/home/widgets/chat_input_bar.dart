@@ -150,6 +150,7 @@ class ChatInputBar extends StatefulWidget {
     this.loading = false,
     this.hasQueuedInput = false,
     this.queuedPreviewText,
+    this.allowSendWhileLoading = false,
     this.onCancelQueuedInput,
     this.onExpandedChanged,
     this.reasoningActive = false,
@@ -210,6 +211,10 @@ class ChatInputBar extends StatefulWidget {
   final bool loading;
   final bool hasQueuedInput;
   final String? queuedPreviewText;
+
+  /// P5 无限流：演出进行中也允许发送（发送即插话）。此时有内容时发送键
+  /// 按「发送」处理，空输入时仍然是「停止」。
+  final bool allowSendWhileLoading;
   final VoidCallback? onCancelQueuedInput;
 
   /// Reports when the composer starts filling the chat area and when it has
@@ -3442,8 +3447,12 @@ class _ChatInputBarState extends State<ChatInputBar>
                                                             hasImages ||
                                                             hasDocs) &&
                                                         !_hasUnreadyImages &&
-                                                        !widget.loading,
+                                                        (!widget.loading ||
+                                                            widget
+                                                                .allowSendWhileLoading),
                                                     loading: widget.loading,
+                                                    allowSendWhileLoading: widget
+                                                        .allowSendWhileLoading,
                                                     onSend: _handleSend,
                                                     onStop: widget.loading
                                                         ? widget.onStop
@@ -3872,12 +3881,17 @@ class _CompactSendButton extends StatelessWidget {
     required this.color,
     required this.icon,
     this.loading = false,
+    this.allowSendWhileLoading = false,
     this.onStop,
     this.tooltip,
   });
 
   final bool enabled;
   final bool loading;
+
+  /// When set, a tap with usable content sends (interjects) even while a
+  /// generation is running; an empty composer still shows the stop action.
+  final bool allowSendWhileLoading;
   final VoidCallback onSend;
   final VoidCallback? onStop;
   final Color color;
@@ -3887,6 +3901,9 @@ class _CompactSendButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // P5 无限流插话：加载中有内容时这个键是「发送」，否则还是「停止」。
+    final interjecting = loading && allowSendWhileLoading && enabled;
+    final showStop = loading && !interjecting;
     final bg = (enabled || loading)
         ? color
         : cs.onSurface.withValues(alpha: 0.12);
@@ -3899,7 +3916,9 @@ class _CompactSendButton extends StatelessWidget {
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
-        onTap: loading ? onStop : (enabled ? onSend : null),
+        onTap: interjecting
+            ? onSend
+            : (loading ? onStop : (enabled ? onSend : null)),
         child: Padding(
           padding: const EdgeInsets.all(7),
           child: AnimatedSwitcher(
@@ -3908,7 +3927,7 @@ class _CompactSendButton extends StatelessWidget {
               scale: anim,
               child: FadeTransition(opacity: anim, child: child),
             ),
-            child: loading
+            child: showStop
                 ? SvgPicture.asset(
                     key: const ValueKey('stop'),
                     'assets/icons/stop.svg',

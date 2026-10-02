@@ -241,6 +241,13 @@ class HomeViewModel extends ChangeNotifier {
   /// 导演裁决的开始/结束不会改变任何其它已监听状态，需要显式刷新界面。
   void notifyGroupDirectorConsultationChanged() => notifyListeners();
 
+  /// P5 无限流：当前会话是否正处于无限流演出中（输入栏据此允许插话）。
+  bool get isCurrentConversationEndlessGroupRound {
+    final cid = currentConversation?.id;
+    if (cid == null) return false;
+    return _chatActions.isEndlessGroupRound(cid);
+  }
+
   QueuedChatInput? get currentQueuedInput {
     final cid = currentConversation?.id;
     final queued = _queuedInput;
@@ -248,6 +255,15 @@ class HomeViewModel extends ChangeNotifier {
       return null;
     }
     return queued;
+  }
+
+  /// 该会话是否有排队等待发送的用户输入。
+  ///
+  /// 无限流群聊的链式决策点用它判断「用户插话了」：有排队消息就主动收尾，
+  /// 加载态一关，排队的那条会自动作为新一次发送启动。
+  bool hasQueuedInput(String conversationId) {
+    final queued = _queuedInput;
+    return queued != null && queued.conversationId == conversationId;
   }
 
   final FileProcessingIndicatorController _fileProcessingIndicator =

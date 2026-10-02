@@ -46,12 +46,16 @@ abstract final class GroupDirector {
       memberCount <= 0 ? 4 : memberCount * 2;
 
   /// Builds the director prompt. Kept pure for testability.
+  ///
+  /// [infinite] is the "endless show" mode: the human is a spectator, so the
+  /// director must always pick a member and never hand the turn back.
   static String buildPrompt({
     required List<({String name, String identity})> roster,
     required List<({String speaker, String content})> recent,
     required String userNickname,
     required Map<String, int> speakCounts,
     required MemoryPromptLangLike lang,
+    bool infinite = false,
   }) {
     final buf = StringBuffer();
     if (lang == MemoryPromptLangLike.zh) {
@@ -76,10 +80,22 @@ abstract final class GroupDirector {
       buf.writeln('1. 直接被提问、被点名回应的人优先开口。');
       buf.writeln('2. 剧情需要时允许同一人连续发言（如分段讲故事、连续动作）。');
       buf.writeln('3. 两人自然对谈时可以让他们交替，其他人不必每轮都插话。');
-      buf.writeln('4. 对话自然收尾、或接下来轮到用户行动时，选 USER。');
-      buf.writeln('5. 不要让所有成员轮流把同一件事点评一遍。');
+      if (infinite) {
+        buf.writeln(
+          '4. 这是一场不会停的即兴演出：真人用户是旁观者、不参与对话，'
+          '绝不要选 USER，永远从成员里选下一位把戏接下去。',
+        );
+        buf.writeln('5. 不要让所有成员轮流把同一件事点评一遍。');
+      } else {
+        buf.writeln('4. 对话自然收尾、或接下来轮到用户行动时，选 USER。');
+        buf.writeln('5. 不要让所有成员轮流把同一件事点评一遍。');
+      }
       buf.writeln();
-      buf.write('只输出 JSON（不要其他文字）：{"next": "成员名字或USER", "reason": "一句话理由"}');
+      buf.write(
+        infinite
+            ? '只输出 JSON（不要其他文字）：{"next": "成员名字", "reason": "一句话理由"}'
+            : '只输出 JSON（不要其他文字）：{"next": "成员名字或USER", "reason": "一句话理由"}',
+      );
     } else {
       buf.writeln(
         'You are the invisible director of a character group chat; decide who should speak next.',
@@ -112,15 +128,27 @@ abstract final class GroupDirector {
       buf.writeln(
         '3. Two characters in a natural exchange may alternate; the others need not chime in.',
       );
-      buf.writeln(
-        '4. When the scene settles or it is the user\'s turn to act, answer USER.',
-      );
-      buf.writeln(
-        '5. Do not let every member comment on the same thing in turn.',
-      );
+      if (infinite) {
+        buf.writeln(
+          '4. This is an endless improvisation: the human is a spectator who does not participate. '
+          'Never answer USER — always pick the next member to carry the scene forward.',
+        );
+        buf.writeln(
+          '5. Do not let every member comment on the same thing in turn.',
+        );
+      } else {
+        buf.writeln(
+          '4. When the scene settles or it is the user\'s turn to act, answer USER.',
+        );
+        buf.writeln(
+          '5. Do not let every member comment on the same thing in turn.',
+        );
+      }
       buf.writeln();
       buf.write(
-        'Output JSON only (no other text): {"next": "member name or USER", "reason": "one short sentence"}',
+        infinite
+            ? 'Output JSON only (no other text): {"next": "member name", "reason": "one short sentence"}'
+            : 'Output JSON only (no other text): {"next": "member name or USER", "reason": "one short sentence"}',
       );
     }
     return buf.toString();
@@ -161,6 +189,7 @@ abstract final class GroupDirector {
     required bool useZhPrompts,
     required Map<String, int> speakCountsByName,
     required Map<String, String> memberNamesById,
+    bool infinite = false,
   }) async {
     final names = memberNamesById.values.toSet();
     if (names.length != memberNamesById.length) {
@@ -178,6 +207,7 @@ abstract final class GroupDirector {
       userNickname: userNicknameLabel,
       speakCounts: speakCountsByName,
       lang: useZhPrompts ? MemoryPromptLangLike.zh : MemoryPromptLangLike.en,
+      infinite: infinite,
     );
     try {
       final config = providerConfigOf(providerKey);

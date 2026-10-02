@@ -288,6 +288,15 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
     ).directorEnabled;
   }
 
+  /// P5：当前群聊会话是否启用无限流（看戏模式）。
+  bool _isInfiniteEnabled(ChatService chat) {
+    final id = widget.conversationId;
+    if (id == null) return false;
+    return ConversationGroupChat.fromExtras(
+      chat.getConversation(id)?.extras ?? const {},
+    ).infiniteEnabled;
+  }
+
   Future<void> _openSessionSkills() async {
     Haptics.light();
     final id = await ensureConversationId(
@@ -529,6 +538,28 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
                 if (!group.isGroup) return extras;
                 return group
                     .copyWith(directorEnabled: !group.directorEnabled)
+                    .applyTo(extras);
+              });
+              if (!context.mounted) return;
+              Navigator.of(context).maybePop();
+            },
+          ),
+          // P5 无限流开关：让角色们自己一直演下去，用户插话才结束本轮。
+          const SizedBox(height: 8),
+          ToolsSheetRow(
+            icon: Lucide.Infinity,
+            label: l10n.groupChatInfiniteToggleLabel,
+            subtitle: l10n.groupChatInfiniteToggleSubtitle,
+            selected: _isInfiniteEnabled(chat),
+            onTap: () async {
+              Haptics.light();
+              final id = widget.conversationId;
+              if (id == null) return;
+              await chat.updateConversationExtras(id, (extras) {
+                final group = ConversationGroupChat.fromExtras(extras);
+                if (!group.isGroup) return extras;
+                return group
+                    .copyWith(infiniteEnabled: !group.infiniteEnabled)
                     .applyTo(extras);
               });
               if (!context.mounted) return;

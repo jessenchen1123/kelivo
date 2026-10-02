@@ -1512,6 +1512,7 @@ class _HomePageState extends State<HomePage>
       mediaController: _mediaController,
       isTablet: isTablet,
       isLoading: _controller.isCurrentConversationLoading,
+      allowSendWhileLoading: _controller.isCurrentConversationEndlessGroupRound,
       isToolModel: _controller.isToolModel,
       isReasoningModel: _controller.isReasoningModel,
       isReasoningEnabled: _controller.isReasoningEnabled,
