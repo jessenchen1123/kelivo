@@ -30,12 +30,18 @@ abstract final class CharacterCardMapper {
       systemPrompt: card.composeSystemPrompt(),
       presetMessages: card.firstMes.isEmpty
           ? const <PresetMessage>[]
-          : <PresetMessage>[PresetMessage(role: 'assistant', content: card.firstMes)],
+          : <PresetMessage>[
+              PresetMessage(role: 'assistant', content: card.firstMes),
+            ],
       // RP defaults: a character remembers (P0 root cause #1) and keeps its
       // memories scoped to itself so characters never leak each other's plot.
+      // Recall and summaries are both required for cross-conversation memory —
+      // memory_pipeline ANDs them together, so enabling only one is a no-op.
       enableMemory: true,
       autoOrganizeMemory: true,
       memoryWriteScope: MemoryWriteScope.alwaysAssistant,
+      allowPastConversationRecall: true,
+      generateConversationSummary: true,
       limitContextMessages: false,
       characterCardData: card.data,
     );
@@ -213,7 +219,9 @@ class CharacterCardService {
   Future<Uint8List?> exportToPngBytes(Assistant assistant) async {
     List<int>? png;
     final path = (assistant.avatar ?? '').trim();
-    if (path.isNotEmpty && !path.startsWith('http') && !path.startsWith('data:')) {
+    if (path.isNotEmpty &&
+        !path.startsWith('http') &&
+        !path.startsWith('data:')) {
       try {
         final file = File(path);
         if (await file.exists()) {

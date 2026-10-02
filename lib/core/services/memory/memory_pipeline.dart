@@ -423,15 +423,20 @@ class MemoryPipelineService {
       );
     }
 
-    final provKey = settings.memoryModelProvider;
-    final mdlId = settings.memoryModelId;
-    if (provKey == null || mdlId == null) {
+    // Memory writing used to require an explicitly configured memory model and
+    // silently did nothing otherwise, which made every "the character forgot"
+    // report look like a retrieval bug when in fact no memory was ever written.
+    // Fall back the same way summaries do: memory → summary → title.
+    final resolved = resolveMemoryModel(settings, assistant: assistant);
+    if (resolved == null) {
       return const MemoryOrganizeResult(
         advanced: false,
         gate: null,
         error: 'memory_model_unset',
       );
     }
+    final provKey = resolved.providerKey;
+    final mdlId = resolved.modelId;
     // Provider/model must still exist (D-20).
     final cfg = settings.getProviderConfig(provKey);
     if (cfg.models.isNotEmpty &&
@@ -903,4 +908,45 @@ class MemoryPipelineService {
       await _memoryV2().reloadCurrentScope();
     } catch (_) {}
   }
+}
+
+/// Which provider/model should write memories, falling back the way the
+/// summary pipeline does when no dedicated memory model was picked.
+///
+/// Returns null only when none of the auxiliary models are configured either —
+/// callers then keep reporting `memory_model_unset`.
+({String providerKey, String modelId})? resolveMemoryModel(
+  SettingsProvider settings, {
+  Assistant? assistant,
+}) {
+  // Same order the summary pipeline uses, with the memory slot on top: a
+  // dedicated memory model wins, then the other auxiliary models, then
+  // whatever the character or the app is already chatting with.
+  final candidates = <({String? providerKey, String? modelId})>[
+    (
+      providerKey: settings.memoryModelProvider,
+      modelId: settings.memoryModelId,
+    ),
+    (
+      providerKey: settings.summaryModelProvider,
+      modelId: settings.summaryModelId,
+    ),
+    (providerKey: settings.titleModelProvider, modelId: settings.titleModelId),
+    (
+      providerKey: assistant?.chatModelProvider,
+      modelId: assistant?.chatModelId,
+    ),
+    (
+      providerKey: settings.currentModelProvider,
+      modelId: settings.currentModelId,
+    ),
+  ];
+  for (final candidate in candidates) {
+    final providerKey = candidate.providerKey;
+    final modelId = candidate.modelId;
+    if (providerKey != null && modelId != null) {
+      return (providerKey: providerKey, modelId: modelId);
+    }
+  }
+  return null;
 }
