@@ -116,6 +116,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'An invisible director picks who speaks next — consecutive lines and pair dialogues allowed';
 
   @override
+  String get groupChatDirectorThinking => 'Director is deciding…';
+
+  @override
   String get defaultModelPageDirectorModelTitle => 'Director model';
 
   @override

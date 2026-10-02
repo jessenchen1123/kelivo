@@ -229,6 +229,18 @@ class HomeViewModel extends ChangeNotifier {
         !_chatActions.isStopping(cid);
   }
 
+  /// P5 导演模式：当前会话是否正在等导演裁决。
+  ///
+  /// 裁决期间没有流式消息，界面本来是静止的，聊天页据此显示「导演正在思考」。
+  bool get isCurrentConversationDirectorThinking {
+    final cid = currentConversation?.id;
+    if (cid == null) return false;
+    return _chatActions.isConsultingGroupDirector(cid);
+  }
+
+  /// 导演裁决的开始/结束不会改变任何其它已监听状态，需要显式刷新界面。
+  void notifyGroupDirectorConsultationChanged() => notifyListeners();
+
   QueuedChatInput? get currentQueuedInput {
     final cid = currentConversation?.id;
     final queued = _queuedInput;

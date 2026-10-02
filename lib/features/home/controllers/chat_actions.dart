@@ -426,6 +426,28 @@ class ChatActions {
   final Map<String, _GroupRoundState> _groupRounds =
       <String, _GroupRoundState>{};
 
+  /// P5 导演模式：正在等待导演裁决的会话 id。
+  ///
+  /// 裁决期间没有任何流式消息，界面本来完全静止、看起来像卡住；UI 据此显示
+  /// 「导演正在思考」提示（见 [HomeViewModel.isCurrentConversationDirectorThinking]）。
+  final Set<String> _directorConsultations = <String>{};
+
+  /// 该会话此刻是否在等导演裁决。
+  bool isConsultingGroupDirector(String conversationId) =>
+      _directorConsultations.contains(conversationId);
+
+  void _beginDirectorConsultation(String conversationId) {
+    if (_directorConsultations.add(conversationId)) {
+      viewModel.notifyGroupDirectorConsultationChanged();
+    }
+  }
+
+  void _endDirectorConsultation(String conversationId) {
+    if (_directorConsultations.remove(conversationId)) {
+      viewModel.notifyGroupDirectorConsultationChanged();
+    }
+  }
+
   /// Whether send/regenerate or cancellation teardown owns [conversationId].
   bool isSendInFlight(String conversationId) =>
       _sendInFlightClaims.containsKey(conversationId) ||
@@ -1277,6 +1299,7 @@ class ChatActions {
             group: groupConfig,
             round: groupRound,
             userMessageText: content,
+            conversationId: conversation.id,
           );
           final pickId = verdict.nextCharacterId;
           directorFirstSpeaker = pickId == null
@@ -2973,7 +2996,35 @@ class ChatActions {
   /// P5 导演：读取最近对话并请求调度决策。
   ///
   /// [userMessageText] 非空时表示发送时选首发（用户消息刚发出、还没有回复）。
+  /// 裁决期间把会话标记为「导演正在思考」，静止的界面才有明确反馈。
   Future<GroupDirectorVerdict> _consultGroupDirector({
+    required ConversationGroupChat group,
+    required _GroupRoundState round,
+    String? userMessageText,
+    String? conversationId,
+  }) async {
+    if (conversationId == null) {
+      return _decideGroupSpeaker(
+        group: group,
+        round: round,
+        userMessageText: userMessageText,
+      );
+    }
+    _beginDirectorConsultation(conversationId);
+    try {
+      return await _decideGroupSpeaker(
+        group: group,
+        round: round,
+        userMessageText: userMessageText,
+        conversationId: conversationId,
+      );
+    } finally {
+      _endDirectorConsultation(conversationId);
+    }
+  }
+
+  /// 导演裁决的实际实现；「正在思考」的提示状态由 [_consultGroupDirector] 负责。
+  Future<GroupDirectorVerdict> _decideGroupSpeaker({
     required ConversationGroupChat group,
     required _GroupRoundState round,
     String? userMessageText,

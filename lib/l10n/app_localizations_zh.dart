@@ -106,6 +106,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupChatDirectorToggleSubtitle => '由隐形导演决定谁接话，允许连续发言与两人对谈';
 
   @override
+  String get groupChatDirectorThinking => '导演正在思考…';
+
+  @override
   String get defaultModelPageDirectorModelTitle => '导演模型';
 
   @override
@@ -12448,6 +12451,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get groupChatDirectorToggleSubtitle => '由隐形导演决定谁接话，允许连续发言与两人对谈';
 
   @override
+  String get groupChatDirectorThinking => '导演正在思考…';
+
+  @override
   String get defaultModelPageDirectorModelTitle => '导演模型';
 
   @override
@@ -24714,6 +24720,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupChatDirectorToggleSubtitle => '由隱形導演決定誰接話，允許連續發言與兩人對談';
+
+  @override
+  String get groupChatDirectorThinking => '導演正在思考…';
 
   @override
   String get defaultModelPageDirectorModelTitle => '導演模型';

@@ -286,6 +286,12 @@ abstract class AppLocalizations {
   /// **'An invisible director picks who speaks next — consecutive lines and pair dialogues allowed'**
   String get groupChatDirectorToggleSubtitle;
 
+  /// No description provided for @groupChatDirectorThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Director is deciding…'**
+  String get groupChatDirectorThinking;
+
   /// No description provided for @defaultModelPageDirectorModelTitle.
   ///
   /// In en, this message translates to:

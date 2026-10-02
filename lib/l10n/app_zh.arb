@@ -30,6 +30,7 @@
   "groupChatTitlePrefix": "群聊：",
   "groupChatDirectorToggleLabel": "导演调度",
   "groupChatDirectorToggleSubtitle": "由隐形导演决定谁接话，允许连续发言与两人对谈",
+  "groupChatDirectorThinking": "导演正在思考…",
   "defaultModelPageDirectorModelTitle": "导演模型",
   "defaultModelPageDirectorModelSubtitle": "群聊调度决策用的轻量模型，未设置时跟随标题模型",
   "characterLibrarySearchHint": "搜索角色…",

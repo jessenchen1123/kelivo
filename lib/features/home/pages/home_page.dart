@@ -61,6 +61,7 @@ import '../widgets/scroll_nav_buttons.dart';
 import '../widgets/message_list_view.dart';
 import '../widgets/chat_input_section.dart';
 import '../widgets/conversation_system_prompt_button.dart';
+import '../widgets/group_director_thinking_hint.dart';
 import '../widgets/chat_input_overlay_layout.dart';
 import '../widgets/chat_selection_app_bar.dart';
 import '../widgets/chat_selection_delete_bar.dart';
@@ -1365,7 +1366,7 @@ class _HomePageState extends State<HomePage>
     required EdgeInsetsGeometry dividerPadding,
   }) {
     final assistant = context.watch<AssistantProvider>().currentAssistant;
-    final footer =
+    final systemPromptButton =
         assistant?.allowConversationSystemPrompt == true &&
             !_controller.isCurrentConversationLoading &&
             !_controller.selecting
@@ -1375,6 +1376,11 @@ class _HomePageState extends State<HomePage>
             backgroundImageActive: _assistantBackgroundActive(context),
           )
         : null;
+    // P5 导演模式：裁决期间没有任何流式消息，时间线末尾改放「导演正在思考」，
+    // 否则界面完全静止、看起来像卡住。
+    final footer = _controller.isCurrentConversationDirectorThinking
+        ? const GroupDirectorThinkingHint()
+        : systemPromptButton;
     if (_controller.isTemporaryConversation &&
         _controller.chatController.collapsedMessages.isEmpty) {
       return _TemporaryConversationEmptyState(
