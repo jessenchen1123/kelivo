@@ -196,6 +196,48 @@ abstract class AppLocalizations {
   /// **'Characters'**
   String get characterLibraryPageTitle;
 
+  /// No description provided for @characterLibraryEntrySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a SillyTavern card (PNG) — persona, opening message and world book ready to chat'**
+  String get characterLibraryEntrySubtitle;
+
+  /// No description provided for @rpFeaturesBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New: Character Library'**
+  String get rpFeaturesBannerTitle;
+
+  /// No description provided for @rpFeaturesBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import character cards and roleplay right away. *Actions* render as narration outside the bubble; long-press the chat title for immersive mode.'**
+  String get rpFeaturesBannerSubtitle;
+
+  /// No description provided for @rpFeaturesBannerAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Character Library'**
+  String get rpFeaturesBannerAction;
+
+  /// No description provided for @rpFeaturesBannerDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t show again'**
+  String get rpFeaturesBannerDismiss;
+
+  /// No description provided for @immersiveModeRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Immersive mode'**
+  String get immersiveModeRowLabel;
+
+  /// No description provided for @immersiveModeRowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the top bar for full-bleed chat'**
+  String get immersiveModeRowSubtitle;
+
   /// No description provided for @characterLibrarySearchHint.
   ///
   /// In en, this message translates to:

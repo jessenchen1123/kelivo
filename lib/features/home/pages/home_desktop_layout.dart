@@ -26,6 +26,7 @@ import '../../../utils/sandbox_path_resolver.dart';
 import '../../../desktop/hotkeys/chat_action_bus.dart';
 import '../../../desktop/hotkeys/sidebar_tab_bus.dart';
 import '../../chat/widgets/frosted/chat_frosted_backdrop.dart';
+import '../../character/pages/character_library_page.dart';
 import '../widgets/assistant_avatar.dart';
 import '../widgets/assistant_entry_actions.dart';
 import 'package:Kelivo/theme/app_font_weights.dart';
@@ -626,6 +627,21 @@ class HomeDesktopScaffold extends StatelessWidget {
   }) {
     final l10n = AppLocalizations.of(context)!;
     return [
+      Tooltip(
+        message: l10n.characterLibraryPageTitle,
+        child: IosIconButton(
+          size: 20,
+          padding: const EdgeInsets.all(8),
+          minSize: 40,
+          icon: Lucide.Drama,
+          semanticLabel: l10n.characterLibraryPageTitle,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CharacterLibraryPage()),
+            );
+          },
+        ),
+      ),
       if (_isDesktop && workspaceBound)
         Tooltip(
           message: l10n.workspaceDeskBarToggle,

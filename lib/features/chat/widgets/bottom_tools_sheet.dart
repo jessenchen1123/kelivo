@@ -19,6 +19,7 @@ import '../../../shared/widgets/ios_tactile.dart';
 import '../../home/widgets/instruction_injection_sheet.dart';
 import '../../home/widgets/world_book_sheet.dart';
 import '../../instruction_injection/pages/instruction_injection_page.dart';
+import '../../character/pages/character_library_page.dart';
 import '../../world_book/pages/world_book_page.dart';
 import '../../model/widgets/ocr_prompt_sheet.dart';
 import '../../workspace/pages/skills_page.dart';
@@ -330,6 +331,24 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
       mainAxisSize: MainAxisSize.min,
       children: [
         ToolsSheetRow(
+          icon: Lucide.Drama,
+          label: l10n.characterLibraryPageTitle,
+          subtitle: l10n.characterLibraryEntrySubtitle,
+          onTap: () {
+            Haptics.light();
+            final rootNav = Navigator.of(context, rootNavigator: true);
+            Navigator.of(context).maybePop();
+            Future.microtask(() {
+              if (!rootNav.mounted) return;
+              rootNav.push(
+                MaterialPageRoute(builder: (_) => const CharacterLibraryPage()),
+              );
+            });
+          },
+          trailing: chevron,
+        ),
+        const SizedBox(height: 8),
+        ToolsSheetRow(
           key: sessionSkillsKey,
           icon: Lucide.WandSparkles,
           label: l10n.workspaceEntrySessionSkills,
@@ -427,6 +446,20 @@ class _LearningAndClearSectionState extends State<_LearningAndClearSection> {
             onLongPress: () => showOcrPromptSheet(context),
           ),
         ],
+        const SizedBox(height: 8),
+        ToolsSheetRow(
+          icon: Lucide.Maximize,
+          label: l10n.immersiveModeRowLabel,
+          subtitle: l10n.immersiveModeRowSubtitle,
+          selected: settings.immersiveChatMode,
+          onTap: () async {
+            Haptics.light();
+            final sp = context.read<SettingsProvider>();
+            await sp.setImmersiveChatMode(!sp.immersiveChatMode);
+            if (!context.mounted) return;
+            Navigator.of(context).maybePop();
+          },
+        ),
         const SizedBox(height: 8),
         ToolsSheetRow(
           icon: Lucide.workflow,

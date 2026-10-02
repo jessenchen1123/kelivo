@@ -67,6 +67,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterLibraryPageTitle => 'Characters';
 
   @override
+  String get characterLibraryEntrySubtitle =>
+      'Import a SillyTavern card (PNG) — persona, opening message and world book ready to chat';
+
+  @override
+  String get rpFeaturesBannerTitle => 'New: Character Library';
+
+  @override
+  String get rpFeaturesBannerSubtitle =>
+      'Import character cards and roleplay right away. *Actions* render as narration outside the bubble; long-press the chat title for immersive mode.';
+
+  @override
+  String get rpFeaturesBannerAction => 'Open Character Library';
+
+  @override
+  String get rpFeaturesBannerDismiss => 'Don\'t show again';
+
+  @override
+  String get immersiveModeRowLabel => 'Immersive mode';
+
+  @override
+  String get immersiveModeRowSubtitle => 'Hide the top bar for full-bleed chat';
+
+  @override
   String get characterLibrarySearchHint => 'Search characters…';
 
   @override

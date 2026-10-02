@@ -211,6 +211,34 @@ void main() {
     expect(find.text(l10n.bottomToolsSheetUpload), findsOneWidget);
   });
 
+  testWidgets('exposes character library and immersive mode rows', (
+    tester,
+  ) async {
+    final l10n = await pumpSheet(tester);
+
+    expect(find.text(l10n.characterLibraryPageTitle), findsOneWidget);
+    expect(find.text(l10n.characterLibraryEntrySubtitle), findsOneWidget);
+    expect(find.text(l10n.immersiveModeRowLabel), findsOneWidget);
+    expect(find.text(l10n.immersiveModeRowSubtitle), findsOneWidget);
+  });
+
+  testWidgets('immersive mode row toggles the persisted setting', (
+    tester,
+  ) async {
+    final l10n = await pumpSheet(tester);
+    expect(settings.immersiveChatMode, isFalse);
+
+    await tester.ensureVisible(find.text(l10n.immersiveModeRowLabel));
+    await tester.tap(find.text(l10n.immersiveModeRowLabel));
+    await tester.pump();
+    expect(settings.immersiveChatMode, isTrue);
+
+    await tester.ensureVisible(find.text(l10n.immersiveModeRowLabel));
+    await tester.tap(find.text(l10n.immersiveModeRowLabel));
+    await tester.pump();
+    expect(settings.immersiveChatMode, isFalse);
+  });
+
   testWidgets(
     'shows camera and photos rows when callers pass them for a text-only model',
     (tester) async {

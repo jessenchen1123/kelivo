@@ -18,6 +18,7 @@ import '../../../shared/animations/widgets.dart';
 import '../../../shared/widgets/ios_tactile.dart';
 import '../../chat/widgets/frosted/chat_frosted_backdrop.dart';
 import '../../chat/widgets/chat_assistant_background.dart';
+import '../../character/pages/character_library_page.dart';
 import '../widgets/assistant_avatar.dart';
 import '../widgets/assistant_entry_actions.dart';
 import 'package:Kelivo/theme/app_font_weights.dart';
@@ -293,6 +294,20 @@ class HomeMobileScaffold extends StatelessWidget {
               ],
             ),
       actions: [
+        IosIconButton(
+          size: 22,
+          minSize: 44,
+          onTap: () {
+            onDismissKeyboard();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CharacterLibraryPage()),
+            );
+          },
+          semanticLabel: AppLocalizations.of(
+            context,
+          )!.characterLibraryPageTitle,
+          icon: Lucide.Drama,
+        ),
         IosIconButton(
           size: 20,
           minSize: 44,
@@ -646,7 +661,6 @@ class _GlassCircleButtonState extends State<_GlassCircleButton> {
     );
   }
 }
-
 
 /// Tiny translucent affordance that leaves immersive mode.
 class _ImmersiveExitButton extends StatelessWidget {

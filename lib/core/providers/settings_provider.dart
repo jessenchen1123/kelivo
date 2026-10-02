@@ -325,6 +325,8 @@ class SettingsProvider extends ChangeNotifier {
   static const String _displayAssistantBubbleFitContentKey =
       'display_assistant_bubble_fit_content_v1';
   static const String _displayRpNarrationStyleKey = 'rp_narration_style_v1';
+  static const String _displayRpFeaturesBannerKey =
+      'rp_features_banner_dismissed_v1';
   static const String _displayImmersiveChatModeKey =
       'display_immersive_chat_mode_v1';
   static const String _displayAssistantBubbleSplitParagraphsKey =
@@ -553,6 +555,12 @@ class SettingsProvider extends ChangeNotifier {
   // Exit via the floating affordance; re-enter by long-pressing the title.
   bool _immersiveChatMode = false;
   bool get immersiveChatMode => _immersiveChatMode;
+
+  // One-time "what's new" banner in the sidebar announcing the roleplay
+  // features (character library, narration, immersive mode). Dismissed once
+  // and never shown again.
+  bool _rpFeaturesBannerDismissed = false;
+  bool get rpFeaturesBannerDismissed => _rpFeaturesBannerDismissed;
 
   // Desktop UI persisted state
   double _desktopSidebarWidth = 240;
@@ -1132,8 +1140,9 @@ class SettingsProvider extends ChangeNotifier {
     _assistantBubbleSplitParagraphs =
         prefs.getBool(_displayAssistantBubbleSplitParagraphsKey) ?? false;
     _rpNarrationStyle = prefs.getBool(_displayRpNarrationStyleKey) ?? true;
-    _immersiveChatMode =
-        prefs.getBool(_displayImmersiveChatModeKey) ?? false;
+    _immersiveChatMode = prefs.getBool(_displayImmersiveChatModeKey) ?? false;
+    _rpFeaturesBannerDismissed =
+        prefs.getBool(_displayRpFeaturesBannerKey) ?? false;
     // display: markdown/math rendering
     _enableDollarLatex = prefs.getBool(_displayEnableDollarLatexKey) ?? true;
     _enableMathRendering =
@@ -2644,6 +2653,13 @@ class SettingsProvider extends ChangeNotifier {
     _immersiveChatMode = v;
     notifyListeners();
     await _preferences.setBool(_displayImmersiveChatModeKey, v);
+  }
+
+  Future<void> setRpFeaturesBannerDismissed(bool v) async {
+    if (_rpFeaturesBannerDismissed == v) return;
+    _rpFeaturesBannerDismissed = v;
+    notifyListeners();
+    await _preferences.setBool(_displayRpFeaturesBannerKey, v);
   }
 
   Future<void> setUseLayeredSheetTiles(bool v) async {

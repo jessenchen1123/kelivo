@@ -14,6 +14,7 @@ import '../../../core/models/chat_item.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../settings/pages/settings_page.dart';
 import '../../translate/pages/translate_page.dart';
+import '../../character/pages/character_library_page.dart';
 import '../../backup/pages/backup_page.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/update_provider.dart';
@@ -1505,6 +1506,113 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
     return rows;
   }
 
+  void _openCharacterLibrary() {
+    Haptics.light();
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CharacterLibraryPage()));
+  }
+
+  /// One-time "what's new" banner announcing the roleplay feature set
+  /// (character library, narration rendering, immersive mode). Dismissing it
+  /// is persisted so it never shows again.
+  Widget _buildRpFeaturesBanner(
+    BuildContext context,
+    Color textBase, {
+    required bool topicsOnly,
+  }) {
+    if (widget.globalSearchMode || topicsOnly) return const SizedBox.shrink();
+    if (context.watch<SettingsProvider>().rpFeaturesBannerDismissed) {
+      return const SizedBox.shrink();
+    }
+
+    final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark
+        ? cs.tertiary.withValues(alpha: 0.18)
+        : cs.tertiary.withValues(alpha: 0.12);
+    final border = cs.tertiary.withValues(alpha: isDark ? 0.38 : 0.24);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Semantics(
+        button: true,
+        label: l10n.rpFeaturesBannerTitle,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: border, width: 0.6),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: IosCardPress(
+            baseColor: bg,
+            borderRadius: BorderRadius.circular(14),
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+            onTap: _openCharacterLibrary,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Lucide.Drama, size: 20, color: cs.tertiary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.rpFeaturesBannerTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: _isDesktop ? 13.5 : 14.5,
+                          fontWeight: AppFontWeights.emphasis,
+                          color: textBase.withValues(alpha: 0.92),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        l10n.rpFeaturesBannerSubtitle,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: _isDesktop ? 12 : 12.5,
+                          height: 1.25,
+                          color: textBase.withValues(alpha: 0.68),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.rpFeaturesBannerAction,
+                        style: TextStyle(
+                          fontSize: _isDesktop ? 12.5 : 13,
+                          fontWeight: AppFontWeights.emphasis,
+                          color: cs.tertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tooltip(
+                  message: l10n.rpFeaturesBannerDismiss,
+                  child: IosIconButton(
+                    icon: Lucide.X,
+                    size: 16,
+                    color: textBase.withValues(alpha: 0.62),
+                    padding: const EdgeInsets.all(6),
+                    semanticLabel: l10n.rpFeaturesBannerDismiss,
+                    onTap: () => context
+                        .read<SettingsProvider>()
+                        .setRpFeaturesBannerDismissed(true),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openBackupSettings() {
     Haptics.light();
     if (_isDesktop) {
@@ -1787,6 +1895,11 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    _buildRpFeaturesBanner(
+                      context,
+                      textBase,
+                      topicsOnly: topicsOnly,
+                    ),
                     _buildBackupReminderBanner(
                       context,
                       textBase,
@@ -2877,6 +2990,24 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
                                                 ),
                                               );
                                             },
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      // 角色库按钮（圆形，无水波纹）
+                                      SizedBox(
+                                        width: 45,
+                                        height: 45,
+                                        child: Center(
+                                          child: IosIconButton(
+                                            size: 22,
+                                            color: textBase,
+                                            icon: Lucide.Drama,
+                                            padding: const EdgeInsets.all(10),
+                                            semanticLabel: AppLocalizations.of(
+                                              context,
+                                            )!.characterLibraryPageTitle,
+                                            onTap: _openCharacterLibrary,
                                           ),
                                         ),
                                       ),

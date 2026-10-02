@@ -59,6 +59,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterLibraryPageTitle => '角色库';
 
   @override
+  String get characterLibraryEntrySubtitle =>
+      '导入 SillyTavern 角色卡（PNG），人设、开场白、世界书一步到位';
+
+  @override
+  String get rpFeaturesBannerTitle => '新功能：角色库上线';
+
+  @override
+  String get rpFeaturesBannerSubtitle =>
+      '导入角色卡即开即用；聊天里 *动作* 会渲染成气泡外旁白；长按顶部标题进入沉浸模式。';
+
+  @override
+  String get rpFeaturesBannerAction => '打开角色库';
+
+  @override
+  String get rpFeaturesBannerDismiss => '不再显示';
+
+  @override
+  String get immersiveModeRowLabel => '沉浸模式';
+
+  @override
+  String get immersiveModeRowSubtitle => '隐藏顶栏，全屏沉浸聊天';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -12348,6 +12371,29 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get characterLibraryPageTitle => '角色库';
 
   @override
+  String get characterLibraryEntrySubtitle =>
+      '导入 SillyTavern 角色卡（PNG），人设、开场白、世界书一步到位';
+
+  @override
+  String get rpFeaturesBannerTitle => '新功能：角色库上线';
+
+  @override
+  String get rpFeaturesBannerSubtitle =>
+      '导入角色卡即开即用；聊天里 *动作* 会渲染成气泡外旁白；长按顶部标题进入沉浸模式。';
+
+  @override
+  String get rpFeaturesBannerAction => '打开角色库';
+
+  @override
+  String get rpFeaturesBannerDismiss => '不再显示';
+
+  @override
+  String get immersiveModeRowLabel => '沉浸模式';
+
+  @override
+  String get immersiveModeRowSubtitle => '隐藏顶栏，全屏沉浸聊天';
+
+  @override
   String get characterLibrarySearchHint => '搜索角色…';
 
   @override
@@ -24561,6 +24607,29 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get characterLibraryPageTitle => '角色庫';
+
+  @override
+  String get characterLibraryEntrySubtitle =>
+      '匯入 SillyTavern 角色卡（PNG），人設、開場白、世界書一步到位';
+
+  @override
+  String get rpFeaturesBannerTitle => '新功能：角色庫上線';
+
+  @override
+  String get rpFeaturesBannerSubtitle =>
+      '匯入角色卡即開即用；聊天裡 *動作* 會渲染成氣泡外旁白；長按頂部標題進入沉浸模式。';
+
+  @override
+  String get rpFeaturesBannerAction => '打開角色庫';
+
+  @override
+  String get rpFeaturesBannerDismiss => '不再顯示';
+
+  @override
+  String get immersiveModeRowLabel => '沉浸模式';
+
+  @override
+  String get immersiveModeRowSubtitle => '隱藏頂欄，全螢幕沉浸聊天';
 
   @override
   String get characterLibrarySearchHint => '搜尋角色…';

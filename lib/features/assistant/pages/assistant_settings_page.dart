@@ -82,42 +82,133 @@ class AssistantSettingsPage extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: ReorderableListView.builder(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
-        itemCount: assistants.length,
-        onReorderItem: (oldIndex, newIndex) async {
-          // Immediately update UI for smooth experience
-          final assistantProvider = context.read<AssistantProvider>();
-          await assistantProvider.reorderAssistants(oldIndex, newIndex);
-        },
-        proxyDecorator: (child, index, animation) {
-          return AnimatedBuilder(
-            animation: animation,
-            builder: (context, _) {
-              final t = Curves.easeOutBack.transform(animation.value);
-              return Transform.scale(
-                scale: 0.98 + 0.02 * t,
-                child: Material(
-                  elevation: 0, // remove drag shadow
-                  shadowColor: Colors.transparent,
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(14),
-                  child: child,
-                ),
-              );
-            },
+      body: Column(
+        children: [
+          _buildCharacterLibraryBanner(context, l10n, cs),
+          Expanded(
+            child: ReorderableListView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
+              itemCount: assistants.length,
+              onReorderItem: (oldIndex, newIndex) async {
+                // Immediately update UI for smooth experience
+                final assistantProvider = context.read<AssistantProvider>();
+                await assistantProvider.reorderAssistants(oldIndex, newIndex);
+              },
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, _) {
+                    final t = Curves.easeOutBack.transform(animation.value);
+                    return Transform.scale(
+                      scale: 0.98 + 0.02 * t,
+                      child: Material(
+                        elevation: 0, // remove drag shadow
+                        shadowColor: Colors.transparent,
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        child: child,
+                      ),
+                    );
+                  },
+                );
+              },
+              itemBuilder: (context, index) {
+                final item = assistants[index];
+                return KeyedSubtree(
+                  key: ValueKey('reorder-assistant-${item.id}'),
+                  child: ReorderableDelayedDragStartListener(
+                    index: index,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _AssistantCard(item: item),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Prominent entry to the character library — the headline feature of this
+  /// fork. Rendered above the assistant list so it cannot be missed.
+  Widget _buildCharacterLibraryBanner(
+    BuildContext context,
+    AppLocalizations l10n,
+    ColorScheme cs,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tint = cs.tertiary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 2),
+      child: _TactileCard(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CharacterLibraryPage()),
           );
         },
-        itemBuilder: (context, index) {
-          final item = assistants[index];
-          return KeyedSubtree(
-            key: ValueKey('reorder-assistant-${item.id}'),
-            child: ReorderableDelayedDragStartListener(
-              index: index,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _AssistantCard(item: item),
+        builder: (pressed, overlay) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Color.alphaBlend(
+                overlay,
+                isDark
+                    ? tint.withValues(alpha: 0.16)
+                    : tint.withValues(alpha: 0.10),
               ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: tint.withValues(alpha: isDark ? 0.32 : 0.20),
+                width: 0.8,
+              ),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: tint.withValues(alpha: isDark ? 0.28 : 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Lucide.Drama, size: 22, color: tint),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.characterLibraryPageTitle,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: AppFontWeights.emphasis,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.characterLibraryEntrySubtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: cs.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Lucide.ChevronRight,
+                  size: 18,
+                  color: cs.onSurface.withValues(alpha: 0.45),
+                ),
+              ],
             ),
           );
         },
