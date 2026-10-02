@@ -14,6 +14,7 @@ import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/models/assistant_regex.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../utils/assistant_regex.dart';
@@ -2322,7 +2323,13 @@ class _MessageListViewState extends State<MessageListView> {
     final currentIdx = availableVersions.indexOf(selectedVersion);
     // P5 群聊：作者角色消息以其本人身份渲染（头像/名字），绕过 1:1 显示偏好。
     Assistant? authorCharacter;
-    if (message.role == 'assistant' && message.characterId != null) {
+    // P5 和导演对话：导演侧消息不是角色，署名「导演」并用通用 Bot 图标。
+    final isDirectorNote =
+        message.role == 'assistant' &&
+        message.characterId == ConversationGroupChat.directorMarkerId;
+    if (message.role == 'assistant' &&
+        message.characterId != null &&
+        !isDirectorNote) {
       try {
         authorCharacter = context.watch<AssistantProvider>().getById(
           message.characterId!,
@@ -2360,14 +2367,20 @@ class _MessageListViewState extends State<MessageListView> {
               size: 30,
             )
           : null,
-      showModelIcon: (useAssistAvatar || useAuthor)
+      showModelIcon: isDirectorNote
+          ? true
+          : (useAssistAvatar || useAuthor)
           ? false
           : presentation.showModelIcon,
-      useAssistantAvatar:
-          (useAssistAvatar || useAuthor) && message.role == 'assistant',
+      useAssistantAvatar: isDirectorNote
+          ? false
+          : (useAssistAvatar || useAuthor) && message.role == 'assistant',
       useAssistantName:
-          (useAssistName || useAuthor) && message.role == 'assistant',
-      assistantName: useAuthor
+          (useAssistName || useAuthor || isDirectorNote) &&
+          message.role == 'assistant',
+      assistantName: isDirectorNote
+          ? AppLocalizations.of(context)!.groupChatDirectorName
+          : useAuthor
           ? authorCharacter.name
           : (useAssistAvatar || useAssistName)
           ? (assistant?.name ?? 'Assistant')

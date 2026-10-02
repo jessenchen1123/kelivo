@@ -462,6 +462,11 @@ class MessageBuilderService {
       }
 
       var content = m.content;
+      // P5 第四墙：用户↔导演的私聊属于另一个频道，角色们永远看不到，
+      // 否则会把导演的调度指令当成自己的台词念出来。
+      if (m.characterId == ConversationGroupChat.directorMarkerId) {
+        continue;
+      }
       // P5 群聊：当前说话角色之外的其他角色发言加名字前缀，模型得以区分说话人。
       if (groupMemberNames != null &&
           m.role == 'assistant' &&

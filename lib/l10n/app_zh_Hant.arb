@@ -32,6 +32,8 @@
   "groupChatDirectorToggleSubtitle": "由隱形導演決定誰接話，允許連續發言與兩人對談",
   "groupChatDirectorThinking": "導演正在思考…",
   "groupChatInfiniteToggleLabel": "無限流（看戲模式）",
+  "groupChatTalkToDirectorLabel": "對導演說",
+  "groupChatDirectorName": "導演",
   "groupChatInfiniteToggleSubtitle": "角色們自己一直演下去，你發訊息才停下",
   "defaultModelPageDirectorModelTitle": "導演模型",
   "defaultModelPageDirectorModelSubtitle": "群聊調度決策用的輕量模型，未設置時跟隨標題模型",

@@ -1297,6 +1297,15 @@ class ChatActions {
         assistantOverride == null &&
         !chatService.isTemporaryConversation(conversation.id);
     Assistant? assistant;
+    // P5 和导演对话：消息只交给隐形导演，不进角色生成管线，也不起群聊轮次。
+    if (isGroupRound && groupConfig.talkToDirector && !scheduled) {
+      return _startDirectorChat(
+        conversation: conversation,
+        group: groupConfig,
+        input: input,
+        content: content,
+      );
+    }
     if (isGroupRound) {
       final resolvableMembers = <String>[
         for (final id in groupConfig.members)
@@ -3078,6 +3087,139 @@ class ChatActions {
   /// 无限流的跑飞护栏：只有整场演出长到这个量级才强制收尾，正常「看戏」
   /// 远达不到。防止无人看守时把额度烧光。
   static const int _endlessRoundSafetyCeiling = 100;
+
+  /// P5 和导演对话：把用户消息落库（带导演作者标记）并立刻交还输入框，
+  /// 导演的回复在后台取回后追加。
+  ///
+  /// 这个频道对角色不可见（`buildApiMessages` 跳过带标记的消息），
+  /// 但导演自己的调度上下文包含它，所以「接下来让 A 和 B 吵一架」
+  /// 这类舞台指令会在后续发言里生效。
+  Future<ChatActionResult> _startDirectorChat({
+    required Conversation conversation,
+    required ConversationGroupChat group,
+    required ChatInputData input,
+    required String content,
+  }) async {
+    final settings = contextProvider.read<SettingsProvider>();
+    if (settings.directorModelProvider == null ||
+        settings.directorModelId == null) {
+      return ChatActionResult.noModel();
+    }
+    final assistantProvider = contextProvider.read<AssistantProvider>();
+    final host =
+        assistantProvider.getById(group.hostId ?? '') ??
+        assistantProvider.currentAssistant;
+    final parts = await MessageGenerationService.buildPersistedUserMessageParts(
+      input,
+      assistant: host,
+    );
+    final ChatMessage userMessage;
+    try {
+      userMessage = await chatService.addMessage(
+        conversationId: conversation.id,
+        role: 'user',
+        parts: parts,
+        characterId: ConversationGroupChat.directorMarkerId,
+      );
+    } catch (e) {
+      return ChatActionResult.error(e.toString());
+    }
+    await chatController.appendPersistedTailMessages([userMessage]);
+    onMessagesChanged?.call();
+    onSendPairAppended?.call();
+    _setConversationLoading(conversation.id, true);
+    unawaited(
+      _runDirectorChatReply(
+        conversation: conversation,
+        group: group,
+        userMessageId: userMessage.id,
+        userText: content,
+      ),
+    );
+    return ChatActionResult.success(userMessage);
+  }
+
+  /// 导演侧单次问答：非流式一次元调用，回复落库后追加到时间线。
+  Future<void> _runDirectorChatReply({
+    required Conversation conversation,
+    required ConversationGroupChat group,
+    required String userMessageId,
+    required String userText,
+  }) async {
+    final settings = contextProvider.read<SettingsProvider>();
+    final providerKey = settings.directorModelProvider;
+    final modelId = settings.directorModelId;
+    final lang = settings.resolvedMemoryPromptLang == MemoryPromptLang.zh
+        ? MemoryPromptLangLike.zh
+        : MemoryPromptLangLike.en;
+    try {
+      if (providerKey == null || modelId == null) {
+        throw StateError('director model not configured');
+      }
+      final assistantProvider = contextProvider.read<AssistantProvider>();
+      final roster = <({String name, String identity})>[
+        for (final id in group.members)
+          if (assistantProvider.getById(id) case final Assistant member)
+            (
+              name: member.name.trim(),
+              identity: GroupDirector.identityOf(member),
+            ),
+      ];
+      // 频道历史：只要导演侧的消息，且跳过刚落的这条用户消息
+      // （buildChatPrompt 会把它单独追加，避免重复）。
+      final recent = <({String speaker, String content})>[];
+      final history = await chatController.messagesForGenerationContext(
+        conversation,
+        maxMessages: 60,
+      );
+      for (final message in history) {
+        if (message.id == userMessageId) continue;
+        if (message.characterId != ConversationGroupChat.directorMarkerId) {
+          continue;
+        }
+        final text = message.content.trim();
+        if (text.isEmpty) continue;
+        recent.add((
+          speaker: message.role == 'assistant'
+              ? GroupDirector.directorLabel(lang)
+              : GroupDirector.userToDirectorLabel(lang),
+          content: GroupDirector.clipText(text),
+        ));
+      }
+      final prompt = GroupDirector.buildChatPrompt(
+        roster: roster,
+        recent: recent,
+        userMessage: userText,
+        lang: lang,
+      );
+      final raw = await ChatApiService.generateText(
+        config: settings.getProviderConfig(providerKey),
+        modelId: modelId,
+        prompt: prompt,
+        extraBody: const {'temperature': 0.6},
+      );
+      final reply = raw.trim();
+      if (reply.isEmpty) throw StateError('empty director reply');
+      final message = await chatService.addMessage(
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: reply,
+        characterId: ConversationGroupChat.directorMarkerId,
+        providerId: providerKey,
+        modelId: modelId,
+      );
+      await chatController.appendPersistedTailMessages([message]);
+      onMessagesChanged?.call();
+    } catch (e) {
+      FlutterLogger.log(
+        '[ChatActions] director chat failed: $e',
+        tag: 'ChatActions',
+      );
+      onStreamError?.call(e.toString());
+    } finally {
+      _setConversationLoading(conversation.id, false);
+    }
+  }
 
   /// 本轮此刻是否处于无限流：开关实时读会话配置，定时任务永不无限流。
   bool _resolveEndless(String conversationId, _GroupRoundState round) {

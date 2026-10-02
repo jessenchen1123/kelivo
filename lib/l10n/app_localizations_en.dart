@@ -122,6 +122,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupChatInfiniteToggleLabel => 'Endless show';
 
   @override
+  String get groupChatTalkToDirectorLabel => 'Talk to director';
+
+  @override
+  String get groupChatDirectorName => 'Director';
+
+  @override
   String get groupChatInfiniteToggleSubtitle =>
       'Characters keep the scene going on their own — send a message to step in';
 

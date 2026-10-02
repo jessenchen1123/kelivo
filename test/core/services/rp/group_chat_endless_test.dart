@@ -35,6 +35,23 @@ void main() {
       expect(extras.containsKey(ConversationGroupChat.keyInfinite), isFalse);
     });
 
+    test('talk-to-director flag round-trips too', () {
+      const config = ConversationGroupChat(
+        enabled: true,
+        members: <String>['a', 'b'],
+        talkToDirector: true,
+      );
+      final decoded = ConversationGroupChat.fromExtras(
+        config.applyTo(const <String, dynamic>{}),
+      );
+      expect(decoded.talkToDirector, isTrue);
+      expect(decoded.copyWith(talkToDirector: false).talkToDirector, isFalse);
+    });
+
+    test('director channel marker is a stable sentinel', () {
+      expect(ConversationGroupChat.directorMarkerId, '__director__');
+    });
+
     test('copyWith toggles the flag without touching the rest', () {
       const config = ConversationGroupChat(
         enabled: true,
@@ -82,6 +99,35 @@ void main() {
       expect(prompt, contains('选 USER。'));
       expect(prompt, contains('"next": "成员名字或USER"'));
       expect(prompt, isNot(contains('绝不要选 USER')));
+    });
+
+    test('director chat prompt labels both sides of the side channel', () {
+      final prompt = GroupDirector.buildChatPrompt(
+        roster: roster,
+        recent: <({String speaker, String content})>[
+          (
+            speaker: GroupDirector.directorLabel(MemoryPromptLangLike.zh),
+            content: '我先让阿澈开口。',
+          ),
+        ],
+        userMessage: '接下来让小雨说。',
+        lang: MemoryPromptLangLike.zh,
+      );
+      expect(prompt, contains('[导演]: 我先让阿澈开口。'));
+      expect(prompt, contains('[用户→导演]: 接下来让小雨说。'));
+      expect(prompt, contains('不要输出 JSON'));
+      expect(prompt, isNot(contains('{"next"')));
+    });
+
+    test('scheduling prompt tells the director to follow stage directions', () {
+      final prompt = GroupDirector.buildPrompt(
+        roster: roster,
+        recent: recent,
+        userNickname: GroupDirector.userNicknameLabel,
+        speakCounts: const <String, int>{},
+        lang: MemoryPromptLangLike.zh,
+      );
+      expect(prompt, contains('用户→导演'));
     });
 
     test('English endless variant is available too', () {

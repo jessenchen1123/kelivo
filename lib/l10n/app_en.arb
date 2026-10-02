@@ -33,6 +33,8 @@
   "groupChatDirectorToggleSubtitle": "An invisible director picks who speaks next — consecutive lines and pair dialogues allowed",
   "groupChatDirectorThinking": "Director is deciding…",
   "groupChatInfiniteToggleLabel": "Endless show",
+  "groupChatTalkToDirectorLabel": "Talk to director",
+  "groupChatDirectorName": "Director",
   "groupChatInfiniteToggleSubtitle": "Characters keep the scene going on their own — send a message to step in",
   "defaultModelPageDirectorModelTitle": "Director model",
   "defaultModelPageDirectorModelSubtitle": "Cheap fast model for group-chat scheduling decisions. Falls back to the title model when unset",

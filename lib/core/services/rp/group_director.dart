@@ -90,6 +90,10 @@ abstract final class GroupDirector {
         buf.writeln('4. 对话自然收尾、或接下来轮到用户行动时，选 USER。');
         buf.writeln('5. 不要让所有成员轮流把同一件事点评一遍。');
       }
+      buf.writeln(
+        '6. 历史里标记为「用户→导演」的发言是真人给你的舞台指令，'
+        '必须优先执行（例如指定谁开口、换场景、让某人少说）。',
+      );
       buf.writeln();
       buf.write(
         infinite
@@ -144,6 +148,11 @@ abstract final class GroupDirector {
           '5. Do not let every member comment on the same thing in turn.',
         );
       }
+      buf.writeln(
+        '6. Lines marked "user→director" in the history are stage directions '
+        'from the human. Follow them first (who speaks, scene changes, who '
+        'should pipe down).',
+      );
       buf.writeln();
       buf.write(
         infinite
@@ -252,6 +261,88 @@ abstract final class GroupDirector {
         decision: GroupDirectorDecision.endTurn,
       );
     }
+  }
+
+  /// Speaker label for the human's stage directions in the director transcript.
+  static String userToDirectorLabel(MemoryPromptLangLike lang) =>
+      lang == MemoryPromptLangLike.zh ? '用户→导演' : 'user→director';
+
+  /// Speaker label for the director's own lines in the director transcript.
+  static String directorLabel(MemoryPromptLangLike lang) =>
+      lang == MemoryPromptLangLike.zh ? '导演' : 'director';
+
+  /// Prompt for the user↔director side channel: the director answers the human
+  /// in prose instead of returning a scheduling verdict.
+  ///
+  /// [recent] is the tail of the same channel, already labelled by the caller.
+  static String buildChatPrompt({
+    required List<({String name, String identity})> roster,
+    required List<({String speaker, String content})> recent,
+    required String userMessage,
+    required MemoryPromptLangLike lang,
+  }) {
+    final buf = StringBuffer();
+    final transcript = <({String speaker, String content})>[
+      ...recent,
+      (speaker: userToDirectorLabel(lang), content: userMessage),
+    ];
+    final zh = lang == MemoryPromptLangLike.zh;
+    if (zh) {
+      buf.writeln('你是角色群聊的隐形导演，此刻正在与真人用户单独对话。');
+      buf.writeln('你不是群成员：不要扮演任何角色、不要替角色说话，只以导演身份回应。');
+      buf.writeln();
+      buf.writeln('群成员（名字 — 身份）：');
+      for (final member in roster) {
+        buf.writeln('- 「${member.name}」：${member.identity}');
+      }
+      buf.writeln();
+      buf.writeln(
+        '记录（[名字] 是角色发言，[${userToDirectorLabel(lang)}] 是真人给你的舞台指令，'
+        '[${directorLabel(lang)}] 是你自己说过的话）：',
+      );
+      for (final turn in transcript) {
+        buf.writeln('[${turn.speaker}]: ${turn.content}');
+      }
+      buf.writeln();
+      buf.writeln('回应要求：');
+      buf.writeln('1. 用户下达舞台指令（让谁开口、换场景、谁少说点）时，明确回答你会怎么调度。');
+      buf.writeln('2. 用户问剧情进展或调度原因时，基于上面的记录如实回答。');
+      buf.writeln('3. 简洁直接，用与用户相同的语言；不客套、不出戏、不扮演角色。');
+      buf.writeln('4. 直接输出回复正文，不要加引号、不要输出 JSON。');
+    } else {
+      buf.writeln(
+        'You are the invisible director of a character group chat, now talking to the human one on one.',
+      );
+      buf.writeln(
+        'You are not a group member: never play a character or speak for one — answer as the director.',
+      );
+      buf.writeln();
+      buf.writeln('Group members (name — identity):');
+      for (final member in roster) {
+        buf.writeln('- "${member.name}": ${member.identity}');
+      }
+      buf.writeln();
+      buf.writeln(
+        'Transcript ([name] is a character, [${userToDirectorLabel(lang)}] is a stage '
+        'direction from the human, [${directorLabel(lang)}] is you):',
+      );
+      for (final turn in transcript) {
+        buf.writeln('[${turn.speaker}]: ${turn.content}');
+      }
+      buf.writeln();
+      buf.writeln('How to answer:');
+      buf.writeln(
+        '1. For a stage direction (who speaks, scene changes, who should pipe down), say plainly what you will do.',
+      );
+      buf.writeln(
+        '2. For questions about the story or your scheduling, answer from the transcript above.',
+      );
+      buf.writeln(
+        '3. Be brief and direct, reply in the user\'s language, stay in the director role.',
+      );
+      buf.writeln('4. Output the reply text only — no quotes, no JSON.');
+    }
+    return buf.toString();
   }
 
   /// Clips a transcript line to keep the director call light.

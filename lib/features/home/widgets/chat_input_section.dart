@@ -1,4 +1,5 @@
 import 'package:Kelivo/features/chat/utils/prompt_injection_selection.dart';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -20,7 +21,9 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/quick_phrase_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../icons/lucide_adapter.dart';
 import '../../../core/services/skills/skills_service.dart';
 import '../../../features/workspace/widgets/environment/environment_status_chip.dart';
 import '../../../features/workspace/workspace_navigation.dart';
@@ -281,7 +284,7 @@ class ChatInputSection extends StatelessWidget {
     final groupMembers = _groupMembers(context);
     Widget result = bar;
     if (groupMembers != null) {
-      // P5 群聊：输入框上方显示参与角色 chips。
+      // P5 群聊：输入框上方显示参与角色 chips，最左侧是「对导演说」模式开关。
       result = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +296,11 @@ class ChatInputSection extends StatelessWidget {
               AppSpacing.sm,
               0,
             ),
-            child: _GroupMembersChips(members: groupMembers),
+            child: _GroupMembersChips(
+              members: groupMembers,
+              talkToDirector: _talkToDirector(context),
+              onToggleTalkToDirector: () => _toggleTalkToDirector(context),
+            ),
           ),
           Flexible(child: result),
         ],
@@ -318,6 +325,38 @@ class ChatInputSection extends StatelessWidget {
           ),
         Flexible(child: result),
       ],
+    );
+  }
+
+  /// P5 和导演对话：当前群聊是否把消息直接交给隐形导演。
+  bool _talkToDirector(BuildContext context) {
+    final id = conversationId;
+    if (id == null) return false;
+    try {
+      final conversation = context.select<ChatService, dynamic>(
+        (chat) => chat.getConversation(id),
+      );
+      if (conversation == null) return false;
+      return ConversationGroupChat.fromExtras(
+        conversation.extras as Map<String, dynamic>,
+      ).talkToDirector;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _toggleTalkToDirector(BuildContext context) {
+    final id = conversationId;
+    if (id == null) return;
+    final chat = context.read<ChatService>();
+    unawaited(
+      chat.updateConversationExtras(id, (extras) {
+        final group = ConversationGroupChat.fromExtras(extras);
+        if (!group.isGroup) return extras;
+        return group
+            .copyWith(talkToDirector: !group.talkToDirector)
+            .applyTo(extras);
+      }),
     );
   }
 
@@ -467,17 +506,71 @@ class ChatInputSection extends StatelessWidget {
 
 /// P5 群聊：输入框上方的参与角色 chips 条（按发言轮转顺序排列）。
 class _GroupMembersChips extends StatelessWidget {
-  const _GroupMembersChips({required this.members});
+  const _GroupMembersChips({
+    required this.members,
+    required this.talkToDirector,
+    required this.onToggleTalkToDirector,
+  });
 
   final List<Assistant> members;
+
+  /// P5 和导演对话：开启后消息全部路由给隐形导演。
+  final bool talkToDirector;
+  final VoidCallback onToggleTalkToDirector;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final active = talkToDirector;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: onToggleTalkToDirector,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: active
+                      ? cs.primary.withValues(alpha: 0.14)
+                      : cs.onSurface.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(999),
+                  border: active
+                      ? Border.all(color: cs.primary.withValues(alpha: 0.5))
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Lucide.Clapperboard,
+                      size: 13,
+                      color: active
+                          ? cs.primary
+                          : cs.onSurface.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      l10n.groupChatTalkToDirectorLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: active
+                            ? cs.primary
+                            : cs.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           for (var i = 0; i < members.length; i++)
             Padding(
               padding: EdgeInsets.only(right: i == members.length - 1 ? 0 : 6),

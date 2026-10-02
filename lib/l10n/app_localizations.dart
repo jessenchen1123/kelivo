@@ -298,6 +298,18 @@ abstract class AppLocalizations {
   /// **'Endless show'**
   String get groupChatInfiniteToggleLabel;
 
+  /// No description provided for @groupChatTalkToDirectorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Talk to director'**
+  String get groupChatTalkToDirectorLabel;
+
+  /// No description provided for @groupChatDirectorName.
+  ///
+  /// In en, this message translates to:
+  /// **'Director'**
+  String get groupChatDirectorName;
+
   /// No description provided for @groupChatInfiniteToggleSubtitle.
   ///
   /// In en, this message translates to:

@@ -112,6 +112,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupChatInfiniteToggleLabel => '无限流（看戏模式）';
 
   @override
+  String get groupChatTalkToDirectorLabel => '对导演说';
+
+  @override
+  String get groupChatDirectorName => '导演';
+
+  @override
   String get groupChatInfiniteToggleSubtitle => '角色们自己一直演下去，你发消息才停下';
 
   @override
@@ -12463,6 +12469,12 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get groupChatInfiniteToggleLabel => '无限流（看戏模式）';
 
   @override
+  String get groupChatTalkToDirectorLabel => '对导演说';
+
+  @override
+  String get groupChatDirectorName => '导演';
+
+  @override
   String get groupChatInfiniteToggleSubtitle => '角色们自己一直演下去，你发消息才停下';
 
   @override
@@ -24738,6 +24750,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupChatInfiniteToggleLabel => '無限流（看戲模式）';
+
+  @override
+  String get groupChatTalkToDirectorLabel => '對導演說';
+
+  @override
+  String get groupChatDirectorName => '導演';
 
   @override
   String get groupChatInfiniteToggleSubtitle => '角色們自己一直演下去，你發訊息才停下';

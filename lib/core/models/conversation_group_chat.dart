@@ -12,6 +12,13 @@ class ConversationGroupChat {
   static const String keyTurnIndex = 'groupChat.turnIndex';
   static const String keyDirector = 'groupChat.director';
   static const String keyInfinite = 'groupChat.infinite';
+  static const String keyTalkToDirector = 'groupChat.talkToDirector';
+
+  /// 伪作者标记：用户↔导演的私聊消息用它写进 `character_id`/`sender_id` 列。
+  ///
+  /// 这些消息对角色们不可见（`buildApiMessages` 直接跳过），但导演的调度
+  /// 上下文包含它们，「接下来让 A 和 B 吵一架」这类舞台指令因此能生效。
+  static const String directorMarkerId = '__director__';
 
   /// Minimum participants for an actual group (a single member is just a
   /// normal 1:1 conversation and must not enable group mode).
@@ -29,12 +36,17 @@ class ConversationGroupChat {
   /// 用户插话（发送消息）才结束本轮。定时任务不触发无限流。
   final bool infiniteEnabled;
 
+  /// P5 和导演对话：用户发消息直接给隐形导演（舞台指令/剧情问答），
+  /// 不走角色生成管线。角色们看不到这个频道。
+  final bool talkToDirector;
+
   const ConversationGroupChat({
     this.enabled = false,
     this.members = const <String>[],
     this.turnIndex = 0,
     this.directorEnabled = false,
     this.infiniteEnabled = false,
+    this.talkToDirector = false,
   });
 
   bool get isGroup => enabled && members.length >= minMembers;
@@ -51,6 +63,7 @@ class ConversationGroupChat {
       turnIndex: (extras[keyTurnIndex] as num?)?.toInt() ?? 0,
       directorEnabled: extras[keyDirector] as bool? ?? false,
       infiniteEnabled: extras[keyInfinite] as bool? ?? false,
+      talkToDirector: extras[keyTalkToDirector] as bool? ?? false,
     );
   }
 
@@ -64,6 +77,7 @@ class ConversationGroupChat {
       next.remove(keyTurnIndex);
       next.remove(keyDirector);
       next.remove(keyInfinite);
+      next.remove(keyTalkToDirector);
       return next;
     }
     next[keyEnabled] = enabled;
@@ -71,6 +85,7 @@ class ConversationGroupChat {
     next[keyTurnIndex] = turnIndex;
     next[keyDirector] = directorEnabled;
     next[keyInfinite] = infiniteEnabled;
+    next[keyTalkToDirector] = talkToDirector;
     return next;
   }
 
@@ -80,6 +95,7 @@ class ConversationGroupChat {
     int? turnIndex,
     bool? directorEnabled,
     bool? infiniteEnabled,
+    bool? talkToDirector,
   }) {
     return ConversationGroupChat(
       enabled: enabled ?? this.enabled,
@@ -87,6 +103,7 @@ class ConversationGroupChat {
       turnIndex: turnIndex ?? this.turnIndex,
       directorEnabled: directorEnabled ?? this.directorEnabled,
       infiniteEnabled: infiniteEnabled ?? this.infiniteEnabled,
+      talkToDirector: talkToDirector ?? this.talkToDirector,
     );
   }
 }
