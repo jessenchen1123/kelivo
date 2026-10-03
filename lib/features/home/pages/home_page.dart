@@ -42,6 +42,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../chat/widgets/bottom_tools_sheet.dart';
 import '../../chat/widgets/chat_tools_sheet.dart';
 import '../../chat/utils/ensure_conversation.dart';
+import '../../../core/models/conversation_group_chat.dart';
 import '../../chat/widgets/context_management_sheet.dart';
 import '../../chat/widgets/reasoning_level_sheet.dart';
 import '../../search/widgets/search_settings_sheet.dart';
@@ -2041,8 +2042,13 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _showCompressContextOptions() async {
-    final allMsgs = await _controller
-        .allMessagesForCurrentConversationContext();
+    // 和 _compressContext 用同一个判定，否则「保留最近 N 条」在两边算的数不一致。
+    final allMsgs =
+        (await _controller.allMessagesForCurrentConversationContext())
+            .where(
+              (m) => m.characterId != ConversationGroupChat.directorMarkerId,
+            )
+            .toList();
     final collapsed = _controller.collapseVersions(allMsgs);
     if (!mounted) return;
     final options = await showDialog<CompressContextOptions>(

@@ -1279,8 +1279,14 @@ class HomeViewModel extends ChangeNotifier {
         : ap.currentAssistant;
 
     // Get messages and collapse to selected versions
-    final allMsgs = await _chatController
-        .allMessagesForCurrentConversationContext();
+    // P5 第四墙：压缩会把历史烧成一段摘要，再作为新会话的第一条消息写回去，
+    // 所以导演频道必须在这里就被排除——它是第四条会绕回角色上下文的通路。
+    final allMsgs =
+        (await _chatController.allMessagesForCurrentConversationContext())
+            .where(
+              (m) => m.characterId != ConversationGroupChat.directorMarkerId,
+            )
+            .toList();
     final collapsed = collapseVersions(allMsgs);
     if (collapsed.isEmpty) return 'no_messages';
 
