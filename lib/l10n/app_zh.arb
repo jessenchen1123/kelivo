@@ -33,6 +33,8 @@
   "groupChatDirectorThinking": "导演正在思考…",
   "groupChatInfiniteToggleLabel": "无限流（看戏模式）",
   "groupChatTalkToDirectorLabel": "对导演说",
+  "groupChatDirectorHint": "对导演说…（点上方胶囊切回角色）",
+  "groupChatTalkToDirectorOnNotice": "已切到「对导演说」：接下来的消息只发给导演，角色看不到。再点一次胶囊即可切回。",
   "groupChatDirectorName": "导演",
   "groupChatInfiniteToggleSubtitle": "角色们自己一直演下去，你发消息才停下",
   "defaultModelPageDirectorModelTitle": "导演模型",

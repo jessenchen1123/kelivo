@@ -23,6 +23,7 @@ import '../../../core/providers/world_book_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../shared/widgets/snackbar.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../core/services/skills/skills_service.dart';
 import '../../../features/workspace/widgets/environment/environment_status_chip.dart';
@@ -348,6 +349,7 @@ class ChatInputSection extends StatelessWidget {
   void _toggleTalkToDirector(BuildContext context) {
     final id = conversationId;
     if (id == null) return;
+    final turningOn = !_talkToDirector(context);
     final chat = context.read<ChatService>();
     unawaited(
       chat.updateConversationExtras(id, (extras) {
@@ -358,6 +360,14 @@ class ChatInputSection extends StatelessWidget {
             .applyTo(extras);
       }),
     );
+    // 这个模式是常驻的：开启时必须说清「角色看不到」，否则用户会以为角色没了。
+    if (turningOn && context.mounted) {
+      showAppSnackBar(
+        context,
+        message: AppLocalizations.of(context)!.groupChatTalkToDirectorOnNotice,
+        duration: const Duration(seconds: 4),
+      );
+    }
   }
 
   /// P5 群聊：当前会话的群成员列表；非群聊返回 null。

@@ -34,6 +34,8 @@
   "groupChatDirectorThinking": "Director is deciding…",
   "groupChatInfiniteToggleLabel": "Endless show",
   "groupChatTalkToDirectorLabel": "Talk to director",
+  "groupChatDirectorHint": "To the director… (tap the chip to go back)",
+  "groupChatTalkToDirectorOnNotice": "Now sending to the director only — the characters cannot see these messages. Tap the chip again to go back.",
   "groupChatDirectorName": "Director",
   "groupChatInfiniteToggleSubtitle": "Characters keep the scene going on their own — send a message to step in",
   "defaultModelPageDirectorModelTitle": "Director model",

@@ -21,6 +21,8 @@ import '../../../shared/responsive/breakpoints.dart';
 import 'dart:async';
 import 'dart:io';
 import '../../../core/models/chat_input_data.dart';
+import '../../../core/models/conversation_group_chat.dart';
+import '../../../core/services/chat/chat_service.dart';
 import '../../../core/models/model_spec.dart';
 import '../../../core/models/reasoning_request.dart';
 import '../../../core/services/api/reasoning/reasoning_level_options.dart';
@@ -734,7 +736,27 @@ class _ChatInputBarState extends State<ChatInputBar>
 
   String _hint(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // P5 和导演对话是「常驻模式」：开着的时候所有消息都只发给导演，角色收不到。
+    // 光靠 chips 行那个小胶囊高亮不够——用户会以为角色不见了，所以输入框里明说。
+    if (_talkToDirector(context)) return l10n.groupChatDirectorHint;
     return l10n.chatInputBarHint;
+  }
+
+  /// P5：当前群聊会话是否把消息直接交给隐形导演。
+  bool _talkToDirector(BuildContext context) {
+    final id = widget.conversationId;
+    if (id == null) return false;
+    try {
+      final conversation = context.select<ChatService, dynamic>(
+        (chat) => chat.getConversation(id),
+      );
+      if (conversation == null) return false;
+      return ConversationGroupChat.fromExtras(
+        conversation.extras as Map<String, dynamic>,
+      ).talkToDirector;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ---------------------------------------------------------------------------

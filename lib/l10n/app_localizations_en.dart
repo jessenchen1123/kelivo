@@ -125,6 +125,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupChatTalkToDirectorLabel => 'Talk to director';
 
   @override
+  String get groupChatDirectorHint =>
+      'To the director… (tap the chip to go back)';
+
+  @override
+  String get groupChatTalkToDirectorOnNotice =>
+      'Now sending to the director only — the characters cannot see these messages. Tap the chip again to go back.';
+
+  @override
   String get groupChatDirectorName => 'Director';
 
   @override

@@ -304,6 +304,18 @@ abstract class AppLocalizations {
   /// **'Talk to director'**
   String get groupChatTalkToDirectorLabel;
 
+  /// No description provided for @groupChatDirectorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To the director… (tap the chip to go back)'**
+  String get groupChatDirectorHint;
+
+  /// No description provided for @groupChatTalkToDirectorOnNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Now sending to the director only — the characters cannot see these messages. Tap the chip again to go back.'**
+  String get groupChatTalkToDirectorOnNotice;
+
   /// No description provided for @groupChatDirectorName.
   ///
   /// In en, this message translates to:

@@ -115,6 +115,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get groupChatTalkToDirectorLabel => '对导演说';
 
   @override
+  String get groupChatDirectorHint => '对导演说…（点上方胶囊切回角色）';
+
+  @override
+  String get groupChatTalkToDirectorOnNotice =>
+      '已切到「对导演说」：接下来的消息只发给导演，角色看不到。再点一次胶囊即可切回。';
+
+  @override
   String get groupChatDirectorName => '导演';
 
   @override
@@ -12472,6 +12479,13 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get groupChatTalkToDirectorLabel => '对导演说';
 
   @override
+  String get groupChatDirectorHint => '对导演说…（点上方胶囊切回角色）';
+
+  @override
+  String get groupChatTalkToDirectorOnNotice =>
+      '已切到「对导演说」：接下来的消息只发给导演，角色看不到。再点一次胶囊即可切回。';
+
+  @override
   String get groupChatDirectorName => '导演';
 
   @override
@@ -24753,6 +24767,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get groupChatTalkToDirectorLabel => '對導演說';
+
+  @override
+  String get groupChatDirectorHint => '對導演說…（點上方膠囊切回角色）';
+
+  @override
+  String get groupChatTalkToDirectorOnNotice =>
+      '已切到「對導演說」：接下來訊息只發給導演，角色看不到。再點一次膠囊即可切回。';
 
   @override
   String get groupChatDirectorName => '導演';
